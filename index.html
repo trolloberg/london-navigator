@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="LDN Gameday">
+<meta name="theme-color" content="#0d2326">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+</head><body>
+<title>London Gameday Navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow phone column, departure-board timeline, sticky tab bar at the bottom like an app */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#0f1d1f; --muted:#5a6a6c; --line:#d6dedd;
+  --accent:#004c54; --accent-ink:#ffffff; --gold:#a67c00; --soft:#e3eeee;
+  --ok:#1d7a45; --warn:#a15c00; --crit:#b3261e; --board:#0d2326; --board-ink:#e9f3f2;
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1415; --surface:#122022; --ink:#e6efee; --muted:#9db0b1; --line:#24393b;
+  --accent:#5fb8b4; --accent-ink:#06191b; --gold:#e0b84a; --soft:#173033;
+  --ok:#5cc98a; --warn:#f0a845; --crit:#ff7a6e; --board:#061012; --board-ink:#e9f3f2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1415; --surface:#122022; --ink:#e6efee; --muted:#9db0b1; --line:#24393b;
+  --accent:#5fb8b4; --accent-ink:#06191b; --gold:#e0b84a; --soft:#173033;
+  --ok:#5cc98a; --warn:#f0a845; --crit:#ff7a6e; --board:#061012; --board-ink:#e9f3f2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;margin:0}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:0 110px}
+a{color:var(--accent);font-weight:600}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.1}
+h2{font-size:1.9rem;text-transform:uppercase}
+h3{font-size:1.3rem;text-transform:uppercase}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+/* header board */
+.board{background:var(--board);color:var(--board-ink);margin-inline:-16px;padding:18px 16px 16px;display:grid;gap:12px}
+.board-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.board h1{font-size:2.3rem;font-weight:800;text-transform:uppercase}
+.board h1 span{color:var(--gold)}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+.clocks{display:flex;gap:14px}
+.clock{display:grid;text-align:right}
+.clock b{font-family:var(--f-mono);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:99px;border:1px solid currentColor}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.on{color:#6fe0a0}.off{color:#ffb35c}
+/* now card */
+.now{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:10px;padding:16px;display:grid;gap:8px;margin-top:16px}
+.now .label{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.now .what{font-family:var(--f-display);font-size:1.7rem;font-weight:800;text-transform:uppercase;line-height:1.05}
+.now .next{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px}
+.count{font-family:var(--f-mono);font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--gold)}
+.sim{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem}
+.sim input[type=range]{flex:1;min-width:160px;accent-color:var(--accent)}
+button,.btn{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.primary,button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+/* sections */
+section{display:none;padding-top:20px}
+section.active{display:grid;gap:16px}
+.alert{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface);display:grid;gap:4px}
+.alert.crit{border-color:var(--crit)}.alert.crit strong:first-child{color:var(--crit)}
+.alert.warn{border-color:var(--warn)}.alert.warn strong:first-child{color:var(--warn)}
+.alert.ok{border-color:var(--ok)}.alert.ok strong:first-child{color:var(--ok)}
+/* timeline */
+.day{display:grid;gap:0}
+.day h3{padding:10px 0;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.step{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.step .t{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:700;font-size:1.05rem;line-height:1.2}
+.step .t small{display:block;font-weight:500;font-size:.72rem;color:var(--muted)}
+.step .c{min-width:0;display:grid;gap:4px}
+.step .c b{font-size:1.05rem}
+.step .meta{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:5px;background:var(--soft);color:var(--ink)}
+.chip.k{background:var(--accent);color:var(--accent-ink)}
+.step.cur{background:var(--soft);margin-inline:-8px;padding-inline:8px;border-radius:8px}
+.step.past{opacity:.55}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+details[open]{padding-bottom:14px}
+summary{cursor:pointer;font-weight:700}
+details > div{display:grid;gap:8px;margin-top:8px}
+ul{margin:0;padding-left:20px}
+li{margin:2px 0}
+/* checklists */
+.check{display:grid;gap:2px}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+.check input:checked + span{text-decoration:line-through;color:var(--muted)}
+.prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--ok);width:0}
+/* tables */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+/* emergency */
+.sos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sos div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:2px}
+.sos b.num{font-family:var(--f-mono);font-size:1.3rem;color:var(--crit);user-select:all}
+.fields{display:grid;gap:10px}
+.fields label{display:grid;gap:3px;font-size:.88rem;color:var(--muted)}
+input[type=text],input[type=number],textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+/* assistant */
+.chat{display:grid;gap:10px}
+.chat form{display:flex;gap:8px}
+.chat form input{flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font-size:.85rem;padding:5px 10px;border-radius:99px}
+.ans{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.ans h4{margin:0;font-size:1rem}
+.conv{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
+/* tabbar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--board);display:flex;justify-content:center;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav.tabs .in{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;width:100%;max-width:720px}
+nav.tabs button{background:transparent;border:0;color:var(--board-ink);opacity:.7;display:grid;justify-items:center;gap:2px;padding:6px 2px;font-size:.7rem;font-family:var(--f-mono);letter-spacing:.04em;text-transform:uppercase}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+nav.tabs button[aria-selected=true]{opacity:1;color:var(--gold)}
+section p{margin:0}
+@media print{section{display:grid!important;gap:12px;break-before:page}section#plan{break-before:auto}nav.tabs,.clocks,#net,.sim,#resetChecks,.chat form,#quick,#onlineAsk,.now{display:none!important}details{border:0;padding:0}.wrap{padding-bottom:0}}
+@media (prefers-reduced-motion:no-preference){.now{transition:border-color .3s}}
+</style>
+
+<div class="wrap">
+  <header class="board">
+    <div class="board-top">
+      <div>
+        <div class="eyebrow">So 11.10. – Mo 12.10.2026 · 2 Personen</div>
+        <h1>Eagles <span>@</span> Jaguars</h1>
+        <div class="eyebrow">Tottenham Hotspur Stadium · Kickoff 14:30 UK</div>
+      </div>
+      <div style="display:grid;gap:8px;justify-items:end">
+        <div class="clocks">
+          <div class="clock"><span class="eyebrow">London</span><b id="ckUK">--:--</b></div>
+          <div class="clock"><span class="eyebrow">Deutschland</span><b id="ckDE">--:--</b></div>
+        </div>
+        <span id="net" class="pill off">offline</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="now" id="nowCard" aria-live="polite">
+    <span class="label" id="nowLabel">Jetzt</span>
+    <div class="what" id="nowWhat">Lädt …</div>
+    <div class="small" id="nowHow"></div>
+    <div class="next"><div><span class="muted small">Als Nächstes</span><br><b id="nextWhat"></b></div><div style="text-align:right"><span class="muted small" id="nextAt"></span><br><span class="count" id="nextIn"></span></div></div>
+    <div class="sim"><label for="simT" class="muted">Zeitvorschau</label><input type="range" id="simT" min="0" max="1000" value="0"><button id="simLive" type="button">Live</button></div>
+  </div>
+
+  <!-- PLAN -->
+  <section id="plan" class="active">
+    <div class="alert ok"><strong>Heute Abend noch erledigen</strong><span>1. Saily-eSIM „UK 1 GB“ auf beiden iPhones installieren (erst in London einschalten).<br>2. Bruder lädt seinen Platz aus der weitergeleiteten Mail in seine eigene Wallet.<br>3. Kostenlosen Sky-Garden-Slot für Sonntag ca. 19:30 auf skygarden.london buchen.<br>4. ETA und Reisepass prüfen.</span></div>
+    <div class="alert crit"><strong>Wichtig: Deine Zeiten sind deutsche Zeit.</strong><span>Der Hinflug EW9464 landet laut Flugplan um <b>11:30 Londoner Zeit</b> (= 12:30 bei uns) in Heathrow Terminal 2. Der Rückflug um 18:35 deutscher Zeit startet um <b>17:35 in London</b>. Dadurch habt ihr am Sonntag eine Stunde mehr als gedacht, und am Montag eine Stunde weniger. Alle London-Zeiten unten sind UK-Zeit.</span></div>
+    <div class="alert warn"><strong>Kein Handgepäck ins Stadion.</strong><span>NFL-Clear-Bag-Regel: nur durchsichtige Taschen bis 30 × 15 × 30 cm. Koffer und Rucksäcke sind verboten, und am Stadion gibt es keine Gepäckaufbewahrung. Deshalb geht ihr erst zum Hotel (liegt genau auf dem Weg, 9 Min. von Liverpool Street) und lasst die Taschen dort.</span></div>
+    <div id="timeline"></div>
+    <details open><summary>Montags-Menü: spontan, fotogen, mit Wegzeit ab Hotel</summary><div>
+      <p class="small muted">Harte Grenze: <b>14:15 zurück am Hotel</b>. Kombiniert, was euch spontan gefällt.</p>
+      <div class="tbl"><table>
+        <tr><th>Spot</th><th>Ab Hotel</th><th>Warum</th></tr>
+        <tr><td><b>Leadenhall Market</b></td><td class="n">7 Min. zu Fuß</td><td>Viktorianische Markthalle, Harry-Potter-Drehort</td></tr>
+        <tr><td><b>Sky Garden</b></td><td class="n">10 Min. zu Fuß</td><td>Gratis Aussicht, Mo 10–18 Uhr, Slot buchen</td></tr>
+        <tr><td><b>St Dunstan in the East</b></td><td class="n">12 Min. zu Fuß</td><td>Kirchenruine voller Pflanzen, Geheimtipp</td></tr>
+        <tr><td><b>Tower Bridge + Shad Thames</b></td><td class="n">15 Min. zu Fuß</td><td>Klassiker, Gassen mit Brücken über euch</td></tr>
+        <tr><td><b>Brick Lane Street Art</b></td><td class="n">10 Min. zu Fuß</td><td>Murals, Vintage, Beigel Bake</td></tr>
+        <tr><td><b>Platform 9¾, King’s Cross</b></td><td class="n">15 Min. Tube</td><td>Metropolitan line direkt ab Aldgate. Foto am Gepäckwagen gratis, Schlange einplanen</td></tr>
+        <tr><td><b>Westminster Bridge, Big Ben</b></td><td class="n">20 Min. Tube</td><td>District/Circle ab Aldgate East bis Westminster</td></tr>
+        <tr><td><b>Rote Telefonzellen, Neal’s Yard</b></td><td class="n">25 Min. Tube</td><td>Covent Garden, bunter Innenhof, gut für Lunch</td></tr>
+        <tr><td><b>Notting Hill</b></td><td class="n">40 Min.</td><td>Bunte Häuser. Nur wenn ihr früh startet</td></tr>
+      </table></div>
+    </div></details>
+    <details><summary>Plan B: Verspätung, Störung, Ausfall</summary><div>
+      <p><b>Flug landet über 45 Min. später:</b> Trotzdem erst zum Hotel, aber nur Taschen an der Rezeption abgeben (2 Min.), kein Check-in. Von Liverpool Street den nächsten Zug nehmen: Weaver line nach White Hart Lane oder Greater Anglia nach Northumberland Park.</p>
+      <p><b>Elizabeth line gestört:</b> Piccadilly line ab Heathrow T2&3 bis Holborn (ca. 55 Min.), dort Central line 2 Stationen bis Liverpool Street. Kostet ca. 25 Min. mehr.</p>
+      <p><b>Weaver line gestört:</b> Von Liverpool Street mit Greater Anglia nach Tottenham Hale oder Northumberland Park. Alternativ Victoria line bis Tottenham Hale (Umstieg Highbury & Islington), dann ca. 20 Min. zu Fuß.</p>
+      <p><b>Taxi/Uber als Notlösung:</b> Hotel → Stadion ca. 35–50 Min., £30–45. Ab Heathrow direkt ca. 75–90 Min. und £90+, lohnt sich nicht.</p>
+      <p><b>Rückflug-Puffer:</b> Spätestens 15:00 ab Liverpool Street fahren. Gate schließt 20 Min. vor Abflug (17:15 UK).</p>
+    </div></details>
+  </section>
+
+  <!-- CHECK -->
+  <section id="check">
+    <h2>Checklisten</h2>
+    <div class="prog"><i id="progBar"></i></div>
+    <div id="checklists"></div>
+    <button type="button" id="resetChecks">Alle Haken zurücksetzen</button>
+  </section>
+
+  <!-- WEGE -->
+  <section id="wege">
+    <h2>Wege &amp; Live-Infos</h2>
+    <p class="muted small">Die Links brauchen Internet. Offline helfen die Beschreibungen darunter.</p>
+    <div id="routes" style="display:grid;gap:12px"></div>
+    <h3>Live-Status</h3>
+    <div class="chips" id="liveLinks"></div>
+  </section>
+
+  <!-- NOTFALL -->
+  <section id="sos">
+    <h2>Notfall</h2>
+    <div class="alert ok" id="offReady" hidden><strong>App ist offline gespeichert</strong><span>Alles hier funktioniert auch ohne Internet. Backup als PDF: <a href="Navigator-offline.pdf" target="_blank">Navigator-offline.pdf</a></span></div>
+    <div class="sos">
+      <div><span class="muted small">Polizei, Rettung, Feuerwehr</span><b class="num">999</b><span class="small">112 geht auch</span></div>
+      <div><span class="muted small">Medizinisch, kein Notfall</span><b class="num">111</b><span class="small">NHS-Hotline, rund um die Uhr</span></div>
+      <div><span class="muted small">Karte sperren (DE)</span><b class="num">+49 116 116</b><span class="small">Sperr-Notruf, alle Banken</span></div>
+      <div><span class="muted small">Deutsche Botschaft London</span><b class="num">+44 20 7824 1300</b><span class="small">23 Belgrave Square, SW1X 8PZ. Außerhalb der Öffnungszeiten Bereitschaft über dieselbe Nummer.</span></div>
+    </div>
+    <div class="alert"><strong>Krankenhaus mit Notaufnahme (A&amp;E)</strong><span>Nähe Hotel: <b>Royal London Hospital</b>, Whitechapel Road, E1 1FR (ca. 15 Min. zu Fuß).<br>Nähe Stadion: <b>North Middlesex University Hospital</b>, Sterling Way, N18 1QX.<br>Apotheke: Boots im Bahnhof Liverpool Street.</span></div>
+    <div class="alert"><strong>Wenn ihr euch verliert</strong><span>Im Stadion: am eigenen Sitzplatz treffen. Nach dem Spiel: Eingang Bahnhof Northumberland Park. Wenn beide Handys leer sind: Hotel-Lobby, Leonardo Hotel London Aldgate, 9 Aldgate High Street, EC3N 1AH.</span></div>
+    <div class="alert"><strong>Pass verloren</strong><span>Bei der Polizei melden (101, nicht dringend), dann Botschaft anrufen. Für die Heimreise gibt es einen Reiseausweis als Pass-Ersatz. Darum vorher Foto von Pass und Personalausweis machen.</span></div>
+    <h3>Eure Daten (bleiben nur auf diesem Gerät)</h3>
+    <div class="fields" id="myData"></div>
+  </section>
+
+  <!-- WISSEN -->
+  <section id="wissen">
+    <h2>Gut zu wissen</h2>
+    <div id="know" style="display:grid;gap:10px"></div>
+    <h3>Geld umrechnen</h3>
+    <div class="conv">
+      <label class="small muted" style="display:grid;gap:3px">Pfund (£)<input type="number" id="gbp" value="10" inputmode="decimal"></label>
+      <span class="mono" style="padding-bottom:10px">⇄</span>
+      <label class="small muted" style="display:grid;gap:3px">Euro (€)<input type="number" id="eur" inputmode="decimal"></label>
+    </div>
+    <label class="small muted" style="display:grid;gap:3px">Kurs: 1 £ = ? € (bei Bedarf anpassen)<input type="number" id="rate" step="0.01" value="1.16"></label>
+    <h3>Kosten pro Person (Schätzung)</h3>
+    <div class="tbl"><table id="costs"></table></div>
+  </section>
+
+  <!-- ASSISTENT -->
+  <section id="ask">
+    <h2>Reise-Assistent</h2>
+    <p class="muted small">Funktioniert offline mit allem, was in dieser Seite steckt. Mit Internet kannst du die Frage zusätzlich an Claude oder Google schicken.</p>
+    <div class="chat">
+      <form id="askForm"><input type="text" id="q" placeholder="z. B. Wie komme ich nach dem Spiel zurück?" autocomplete="off"><button class="primary" type="submit">Fragen</button></form>
+      <div class="chips" id="quick"></div>
+      <div id="answers" style="display:grid;gap:10px"></div>
+      <div id="onlineAsk" class="chips"></div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="Bereiche"><div class="in" role="tablist">
+  <button role="tab" data-t="plan" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Plan</button>
+  <button role="tab" data-t="check"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Check</button>
+  <button role="tab" data-t="wege"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 0114 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Wege</button>
+  <button role="tab" data-t="ask"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Fragen</button>
+  <button role="tab" data-t="wissen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Wissen</button>
+  <button role="tab" data-t="sos"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 16.5v.5"/></svg>Notfall</button>
+</div></nav>
+
+<script>
+(function(){
+const LS = {
+  get(k,d){try{const v=localStorage.getItem('ldn26_'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('ldn26_'+k,JSON.stringify(v))}catch(e){}}
+};
+const $=s=>document.querySelector(s);
+const gm=(o,d,mode)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(o)+'&destination='+encodeURIComponent(d)+'&travelmode='+(mode||'transit');
+const HOTEL='Leonardo Hotel London Aldgate, 9 Aldgate High Street, London EC3N 1AH';
+const STADIUM='Tottenham Hotspur Stadium, London N17 0BX';
+
+/* ---------- schedule: times with explicit offsets (DE = +02:00, UK = +01:00) ---------- */
+const S=[
+ {d:'Sonntag 11.10.',t:'2026-10-11T07:00+02:00',z:'DE',w:'Aufstehen, frühstücken',h:'Reisepass, Handy, Ladekabel, Adapter (Typ G) einpacken. ETA prüfen.',tags:['Haltern']},
+ {t:'2026-10-11T07:50+02:00',z:'DE',w:'Abfahrt Haltern am See',h:'Ca. 70 km über A43/A52, sonntags ca. 55 Min. Parkplatz am besten vorab buchen.',tags:['Auto','55 Min.'],k:1},
+ {t:'2026-10-11T08:50+02:00',z:'DE',w:'Parken am Flughafen DUS',h:'Vom Parkhaus zum Terminal 5–15 Min. (je nach Parkplatz, ggf. SkyTrain).',tags:['15 Min.']},
+ {t:'2026-10-11T09:10+02:00',z:'DE',w:'Direkt zur Sicherheitskontrolle',h:'Online eingecheckt, nur Handgepäck: kein Schalter nötig. Flüssigkeiten max. 100 ml im 1-Liter-Beutel.',tags:['20–40 Min.']},
+ {t:'2026-10-11T09:45+02:00',z:'DE',w:'Gate-Bereich, Frühstück Nr. 2',h:'Letzte Gelegenheit für günstigeres Essen und Wasserflasche (leer mitnehmen fürs Stadion).',tags:['Puffer']},
+ {t:'2026-10-11T10:30+02:00',z:'DE',w:'Boarding',h:'Eurowings EW9464.',tags:['Gate']},
+ {t:'2026-10-11T11:05+02:00',z:'DE',w:'Abflug DUS → LHR',h:'Flugzeit ca. 1 Std. 25 Min. Uhr am Handy stellt sich in London automatisch eine Stunde zurück.',tags:['EW9464'],k:1},
+ {t:'2026-10-11T11:30+01:00',z:'UK',w:'Landung Heathrow Terminal 2',h:'= 12:30 deutsche Zeit. Zügig aussteigen, Schildern „Arrivals / UK Border“ folgen.',tags:['LHR T2'],k:1},
+ {t:'2026-10-11T11:40+01:00',z:'UK',w:'Einreise per eGate',h:'Reisepass aufs Lesegerät, Blick in die Kamera. ETA ist mit dem Pass verknüpft. Ohne Koffer-Band direkt raus.',tags:['15–30 Min.']},
+ {t:'2026-10-11T12:05+01:00',z:'UK',w:'Elizabeth line nach Liverpool Street',h:'Station „Heathrow Terminals 2 & 3“ (lila Schilder). Mit eigener kontaktloser Karte/Handy am Gate tippen, jeder separat. Züge alle ca. 10 Min. Richtung Abbey Wood oder Shenfield.',tags:['ca. 40 Min.','ca. £13'],k:1},
+ {t:'2026-10-11T12:45+01:00',z:'UK',w:'Liverpool Street → Hotel zu Fuß',h:'Ausgang Bishopsgate, über Houndsditch zur Aldgate High Street. Ca. 750 m.',tags:['9 Min.']},
+ {t:'2026-10-11T12:55+01:00',z:'UK',w:'Hotel: Taschen abgeben',h:'Early Check-in fragen, sonst Gepäck an der Rezeption lassen. Umpacken: nur Klarsichtbeutel, Handy, Powerbank, Pass/Ausweis, leere Wasserflasche. Toilette.',tags:['20 Min.'],k:1},
+ {t:'2026-10-11T13:15+01:00',z:'UK',w:'Zurück nach Liverpool Street, Snack holen',h:'Pret, M&S oder Leon im Bahnhof. Im Stadion ist Essen teurer.',tags:['10 Min.']},
+ {t:'2026-10-11T13:25+01:00',z:'UK',w:'Weaver line nach White Hart Lane',h:'Oranges Overground-Logo, Richtung Enfield Town oder Cheshunt. Am Spieltag ca. 7 Züge pro Stunde. Alternative: Greater Anglia nach Northumberland Park (ca. 15 Min.).',tags:['ca. 22 Min.','ca. £2'],k:1},
+ {t:'2026-10-11T13:50+01:00',z:'UK',w:'Fußweg zum Stadion, Security',h:'Von White Hart Lane ca. 8–10 Min. Tore öffnen 2 Std. vor Kickoff. Stadion ist bargeldlos.',tags:['10 Min.']},
+ {t:'2026-10-11T14:05+01:00',z:'UK',w:'Am Platz: Pregame, Hymnen, Getränk',h:'NFL empfiehlt, 30 Min. vor Kickoff zu sitzen.',tags:['Puffer']},
+ {t:'2026-10-11T14:30+01:00',z:'UK',w:'KICKOFF Eagles vs. Jaguars',h:'Spiel dauert ca. 3 Std. 15 Min. Merch gibt es nicht im Stadion, nur im NFL Store an der Tottenham High Road.',tags:['Spiel'],k:1},
+ {t:'2026-10-11T17:45+01:00',z:'UK',w:'Spielende (ca.), kurz sitzen bleiben',h:'15–20 Min. warten spart oft mehr Zeit als sofort in die Schlange zu gehen.',tags:['ca.']},
+ {t:'2026-10-11T18:05+01:00',z:'UK',w:'Northumberland Park → Liverpool Street',h:'Laut Stadion die beste Verbindung nach Liverpool Street nach dem Spiel (13–14 Züge/Std.). Rechnet mit 20–45 Min. Schlange.',tags:['ca. 60 Min. gesamt'],k:1},
+ {t:'2026-10-11T19:10+01:00',z:'UK',w:'Hotel: Check-in, frisch machen',h:'Pässe in den Zimmersafe.',tags:['30 Min.']},
+{t:'2026-10-11T19:30+01:00',z:'UK',w:'Sky Garden: London von oben (gratis)',h:'10 Min. zu Fuß vom Hotel (20 Fenchurch St). Sonntags bis 21 Uhr offen, Terrasse nur bis 18 Uhr. Kostenlosen Zeitslot HEUTE auf skygarden.london buchen. Ausgebucht? Bar im Sky Garden mit Tischreservierung oder die Skybar im eigenen Hotel.',tags:['Insta','gratis'],k:1},
+{t:'2026-10-11T20:30+01:00',z:'UK',w:'Abendessen: Dishoom Shoreditch',h:'Fotogenes Bombay-Café-Interieur, ca. £30–35 p.P. Digitale Warteliste vor Ort. Plan B: Brick Lane (Curry, günstiger) oder Flat Iron Spitalfields (Steak ca. £15).',tags:['Essen','mittel']},
+{t:'2026-10-11T22:00+01:00',z:'UK',w:'Tower Bridge bei Nacht + St Katharine Docks',h:'Beleuchtete Brücke, bester Fotospot vom Nordufer neben dem Tower. 15 Min. zurück zum Hotel.',tags:['Insta','optional']},
+ {d:'Montag 12.10.',t:'2026-10-12T08:00+01:00',z:'UK',w:'Frühstück',h:'Full English Breakfast probieren.',tags:['Hotel/Café']},
+ {t:'2026-10-12T09:00+01:00',z:'UK',w:'Auschecken, Gepäck an Rezeption',h:'Checkout-Zeit an der Rezeption bestätigen.',tags:['10 Min.'],k:1},
+{t:'2026-10-12T09:15+01:00',z:'UK',w:'Spontan unterwegs (siehe Montags-Menü)',h:'Unten im Plan: Spots mit Wegzeit ab Hotel. Vorschlag ohne Nachdenken: Leadenhall Market → Sky Garden (Tagesslot) → St Dunstan in the East → Tower Bridge.',tags:['Insta','spontan'],k:1},
+{t:'2026-10-12T12:45+01:00',z:'UK',w:'Mittagessen',h:'In der Gegend, in der ihr gerade seid. Bis 13:45 fertig sein.',tags:['Essen']},
+{t:'2026-10-12T13:45+01:00',z:'UK',w:'Zurück Richtung Hotel',h:'Harte Grenze: 14:15 am Hotel. Aus Westminster/Covent Garden ca. 25 Min. mit District/Circle bis Aldgate East oder Tower Hill.',tags:['Deadline'],k:1},
+ {t:'2026-10-12T14:15+01:00',z:'UK',w:'Gepäck holen, nach Liverpool Street',h:'Spätestens 15:00 im Zug sitzen.',tags:['10 Min.']},
+ {t:'2026-10-12T14:30+01:00',z:'UK',w:'Elizabeth line nach Heathrow T2 & 3',h:'Zug Richtung „Heathrow Terminal 4/5“, am Bahnsteig auf Ziel achten. Nicht nach Reading einsteigen.',tags:['ca. 45 Min.','ca. £13'],k:1},
+ {t:'2026-10-12T15:15+01:00',z:'UK',w:'Terminal 2: Sicherheitskontrolle',h:'Eurowings fliegt ab Terminal 2. Gate wird ca. 1 Std. vorher angezeigt.',tags:['30 Min.']},
+ {t:'2026-10-12T17:35+01:00',z:'UK',w:'Abflug LHR → DUS',h:'= 18:35 deutsche Zeit. Gate schließt ca. 17:15 UK.',tags:['EW9467?'],k:1},
+ {t:'2026-10-12T20:00+02:00',z:'DE',w:'Landung Düsseldorf',h:'Zum Parkhaus, ca. 20 Min.',tags:['DUS']},
+ {t:'2026-10-12T21:15+02:00',z:'DE',w:'Zuhause in Haltern',h:'Geschafft.',tags:['Auto 55 Min.'],k:1}
+];
+const T=S.map(s=>new Date(s.t).getTime());
+const fmt=(ms,tz)=>new Intl.DateTimeFormat('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:tz}).format(ms);
+const UKZ='Europe/London',DEZ='Europe/Berlin';
+
+function renderTimeline(){
+  let html='',open=false;
+  S.forEach((s,i)=>{
+    if(s.d){ if(open) html+='</div>'; html+='<div class="day"><h3><span>'+s.d+'</span><span class="eyebrow muted">UK-Zeit · (DE)</span></h3>'; open=true;}
+    const uk=fmt(T[i],UKZ), de=fmt(T[i],DEZ);
+    const main=s.z==='UK'?uk:de, sub=s.z==='UK'?'DE '+de:'UK '+uk;
+    html+='<div class="step" id="st'+i+'"><div class="t">'+main+'<small>'+sub+'</small></div><div class="c"><b>'+s.w+'</b><span class="small muted">'+s.h+'</span><div class="meta">'+s.tags.map((t,j)=>'<span class="chip'+(j===0&&s.k?' k':'')+'">'+t+'</span>').join('')+'</div></div></div>';
+  });
+  html+='</div>';
+  $('#timeline').innerHTML=html;
+}
+renderTimeline();
+
+/* ---------- now / next ---------- */
+const start=T[0]-12*3600e3, end=T[T.length-1]+3600e3;
+let simMs=null;
+function nowMs(){return simMs??Date.now()}
+function dur(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600e3),m=Math.floor(ms%3600e3/60e3),s=Math.floor(ms%60e3/1e3);return (h?h+'h ':'')+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s'}
+function tick(){
+  const n=nowMs();
+  $('#ckUK').textContent=fmt(n,UKZ); $('#ckDE').textContent=fmt(n,DEZ);
+  let cur=-1; for(let i=0;i<T.length;i++) if(T[i]<=n) cur=i;
+  const nx=cur+1<T.length?cur+1:-1;
+  if(cur<0){ $('#nowLabel').textContent='Vor der Reise'; $('#nowWhat').textContent='Packen & ETA prüfen'; $('#nowHow').textContent='Check-Reiter durchgehen. Online-Check-in bei Eurowings erledigen und Tickets in die App laden.'; }
+  else { $('#nowLabel').textContent='Jetzt · seit '+fmt(T[cur],S[cur].z==='UK'?UKZ:DEZ)+' '+S[cur].z; $('#nowWhat').textContent=S[cur].w; $('#nowHow').textContent=S[cur].h; }
+  if(nx>=0){ $('#nextWhat').textContent=S[nx].w; $('#nextAt').textContent=fmt(T[nx],S[nx].z==='UK'?UKZ:DEZ)+' '+S[nx].z+'-Zeit'; $('#nextIn').textContent='in '+dur(T[nx]-n); }
+  else { $('#nextWhat').textContent='Reise beendet'; $('#nextAt').textContent=''; $('#nextIn').textContent=''; }
+  document.querySelectorAll('.step').forEach((el,i)=>{el.classList.toggle('cur',i===cur);el.classList.toggle('past',i<cur);});
+  if(simMs===null){ const r=(n-start)/(end-start); $('#simT').value=Math.round(Math.min(1,Math.max(0,r))*1000); }
+}
+$('#simT').addEventListener('input',e=>{simMs=start+(end-start)*e.target.value/1000;tick();});
+$('#simLive').addEventListener('click',()=>{simMs=null;tick();});
+setInterval(tick,1000); tick();
+
+/* ---------- online ---------- */
+function net(){const on=navigator.onLine;const p=$('#net');p.textContent=on?'online':'offline';p.className='pill '+(on?'on':'off');}
+addEventListener('online',net);addEventListener('offline',net);net();
+
+/* ---------- tabs ---------- */
+function show(t){document.querySelectorAll('section').forEach(s=>s.classList.toggle('active',s.id===t));document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));LS.set('tab',t);scrollTo(0,0);}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.t)));
+const h=(location.hash||'').slice(1); show(['plan','check','wege','ask','wissen','sos'].includes(h)?h:LS.get('tab','plan'));
+
+/* ---------- checklists ---------- */
+const CL={
+ 'Heute Abend (Samstag)':[
+  'UK ETA für beide genehmigt (gov.uk/eta oder App „UK ETA“, £20 p.P.)',
+  'Reisepass gültig dabei – Personalausweis reicht für UK NICHT',
+  'Online-Check-in Eurowings, Bordkarten ins Wallet',
+  'NFL-Tickets: jeder hat seinen eigenen Platz in der eigenen Apple Wallet',
+  'Parkplatz DUS gebucht',
+  'Handytarif: UK-Roaming inklusive? Sonst eSIM installieren',
+  'Kreditkarte/Debitkarte ohne Auslandsgebühr, Apple/Google Pay aktiv',
+  'Bank-App: Karte für Ausland freigeschaltet',
+  'Foto von Pass, Ausweis, Tickets, Buchung in einem Offline-Album',
+  'Diese Seite offline speichern + Google-Maps-Karte London offline laden'],
+ 'Handgepäck':[
+  'Reisestecker-Adapter Typ G (UK)','Powerbank (für den Spieltag!) + Kabel',
+  'Klarsichtbeutel fürs Stadion (max. 30×15×30 cm) oder Gefrierbeutel',
+  'Leere Plastik-Trinkflasche (max. 1 l, darf ins Stadion)',
+  'Regenjacke, kleiner Knirps (max. 60 cm)','Eagles-Trikot / Fan-Kleidung',
+  'Flüssigkeiten max. 100 ml im 1-l-Beutel','Medikamente, Ohrstöpsel',
+  'Wechselkleidung für 1 Nacht, Zahnbürste'],
+ 'Stadion (Sonntag 13:00)':[
+  'Rucksack/Koffer im Hotel gelassen','Ticket-App offen, Akku > 60 %',
+  'Pass/Ausweis am Körper (Alterskontrolle Bier: „Challenge 25“)',
+  'Kein Essen, keine Getränke, kein Selfie-Stick dabei','Treffpunkt für Trennung abgesprochen'],
+ 'Abreise (Montag)':[
+  'Zimmersafe leer, Pässe eingesteckt','Ladekabel aus der Steckdose',
+  'Gepäck an der Rezeption abgeholt','Spätestens 15:00 in der Elizabeth line',
+  'Parkticket DUS griffbereit']
+};
+function renderChecks(){
+  const st=LS.get('checks',{});let html='',tot=0,done=0;
+  Object.entries(CL).forEach(([g,items],gi)=>{
+    html+='<details '+(gi===0?'open':'')+'><summary>'+g+'</summary><div class="check">';
+    items.forEach((it,ii)=>{const id='c'+gi+'_'+ii;tot++;if(st[id])done++;
+      html+='<label for="'+id+'"><input type="checkbox" id="'+id+'" '+(st[id]?'checked':'')+'><span>'+it+'</span></label>';});
+    html+='</div></details>';
+  });
+  $('#checklists').innerHTML=html;$('#progBar').style.width=(done/tot*100)+'%';
+  document.querySelectorAll('#checklists input').forEach(c=>c.addEventListener('change',()=>{const s=LS.get('checks',{});s[c.id]=c.checked;LS.set('checks',s);renderChecks();}));
+}
+renderChecks();
+$('#resetChecks').addEventListener('click',()=>{LS.set('checks',{});renderChecks();});
+
+/* ---------- routes ---------- */
+const R=[
+ ['Haltern → Flughafen DUS','Haltern am See','Flughafen Düsseldorf','driving','A43 Richtung Wuppertal, A2/A3 oder A52 → Flughafen. Ca. 70 km, 55 Min.'],
+ ['Heathrow T2 → Hotel','Heathrow Terminal 2',HOTEL,'transit','Elizabeth line ab „Heathrow Terminals 2 & 3“ bis Liverpool Street (ca. 40 Min.), dann 9 Min. zu Fuß. Ca. £13 p.P.'],
+ ['Hotel → Stadion','Liverpool Street Station, London',STADIUM,'transit','9 Min. zu Fuß nach Liverpool Street, Weaver line nach White Hart Lane (22 Min.), 10 Min. zu Fuß. Gesamt ca. 45 Min.'],
+ ['Stadion → Hotel','Northumberland Park Station, London',HOTEL,'transit','Greater Anglia ab Northumberland Park nach Liverpool Street (ca. 15 Min. Fahrt, plus Schlange), dann 9 Min. zu Fuß.'],
+ ['Hotel → Abendessen Brick Lane',HOTEL,'Brick Lane, London E1','walking','Ca. 10–12 Min. zu Fuß Richtung Norden über Commercial Street.'],
+ ['Hotel → Heathrow T2','Liverpool Street Station, London','Heathrow Terminal 2','transit','Elizabeth line Richtung Heathrow Terminal 4/5, Ausstieg „Heathrow Terminals 2 & 3“. Ca. 45 Min.'],
+ ['Flughafen DUS → Haltern','Flughafen Düsseldorf','Haltern am See','driving','Ca. 55 Min.']
+];
+$('#routes').innerHTML=R.map(r=>'<div class="alert"><strong>'+r[0]+'</strong><span class="small">'+r[4]+'</span><span><a class="btn" href="'+gm(r[1],r[2],r[3])+'" target="_blank" rel="noopener">In Google Maps öffnen</a></span></div>').join('');
+const L=[
+ ['TfL Live-Status','https://tfl.gov.uk/tube-dlr-overground/status/'],
+ ['Flug EW9464 (hin)','https://www.flightradar24.com/data/flights/ew9464'],
+ ['Flug EW9467 (zurück, prüfen)','https://www.flightradar24.com/data/flights/ew9467'],
+ ['Eurowings Check-in','https://www.eurowings.com/de/buchen/check-in.html'],
+ ['Heathrow Terminal 2','https://www.heathrow.com/at-the-airport/terminal-guides/terminal-2'],
+ ['Wetter London (Met Office)','https://www.metoffice.gov.uk/weather/forecast/gcpvj0v07'],
+ ['NFL Clear-Bag-Regeln','https://www.nfl.com/news/nfl-uk-clear-bag-policy'],
+ ['Stadion-Anreise (Spurs)','https://www.tottenhamhotspur.com/the-stadium/getting-here/'],
+ ['UK ETA beantragen','https://www.gov.uk/eta'],
+ ['Sky Garden buchen','https://skygarden.london/booking/'],
+ ['Saily eSIM UK','https://saily.com/esim-united-kingdom/'],
+ ['Spielinfo Eagles London','https://www.philadelphiaeagles.com/london/']
+];
+$('#liveLinks').innerHTML=L.map(l=>'<a class="btn" href="'+l[1]+'" target="_blank" rel="noopener">'+l[0]+'</a>').join('');
+
+/* ---------- my data ---------- */
+const F=[['hotelTel','Hotel-Telefon (aus der Buchungsbestätigung)'],['hotelRef','Hotel-Buchungsnummer'],['flightRef','Flug-Buchungscode'],['seats','Ticket: Block / Reihe / Sitz '],['bro','Handynummer Bruder'],['park','Parkplatz DUS (Ebene/Reihe)'],['notes','Notizen']];
+$('#myData').innerHTML=F.map(f=>'<label for="f_'+f[0]+'">'+f[1]+'<input type="text" id="f_'+f[0]+'" value="'+(LS.get('f_'+f[0],f[0]==='seats'?'':'')+'').replace(/"/g,'&quot;')+'"></label>').join('');
+F.forEach(f=>$('#f_'+f[0]).addEventListener('input',e=>LS.set('f_'+f[0],e.target.value)));
+
+/* ---------- knowledge ---------- */
+const K=[
+ {k:'eta visum visa einreise pass personalausweis ausweis grenze egate',q:'Einreise: ETA, Pass, eGates',a:'Für Deutsche gilt seit April 2025 die <b>ETA-Pflicht</b> (Electronic Travel Authorisation), seit 8. April 2026 kostet sie <b>£20</b> pro Person, gültig 2 Jahre. Beantragen über die App „UK ETA“ oder gov.uk/eta. Meist in Minuten genehmigt, offiziell kann es bis zu 3 Werktage dauern. Ohne ETA kann die Airline das Boarding verweigern.<br>Einreise nur mit <b>Reisepass</b>, der Personalausweis reicht seit 2021 nicht mehr. Mit ETA könnt ihr die eGates nutzen.'},
+{k:'esim sim roaming internet daten handy netz mobil aldi saily',q:'Internet: Aldi Talk oder Saily',a:'<b>Aldi Talk</b> lässt UK aktuell freiwillig zu, gesetzlich garantiert ist es nicht. Ohne passendes Paket kostet es ca. 0,20–0,50 € pro MB. Darum für euch: <b>Saily eSIM „United Kingdom 1 GB / 7 Tage“ für ca. 4,49 $ pro Person</b> (3 GB für 8,99 $, wenn ihr viel Insta-Stories macht). Heute Abend in der Saily-App kaufen und installieren. In London: Einstellungen → Mobilfunk → Saily für „Mobile Daten“ wählen, Datenroaming der Aldi-Linie aus, Aldi-Linie für Anrufe/SMS anlassen.'},
+ {k:'geld währung pfund bar karte bezahlen kontaktlos kreditkarte euro',q:'Geld & Bezahlen',a:'Währung: Pfund Sterling (£). Fast alles läuft kontaktlos, <b>das Stadion ist komplett bargeldlos</b>. Kreditkarte oder Apple/Google Pay nutzen. Beim Kartenterminal immer <b>in GBP</b> bezahlen, nicht „in Euro umrechnen“ (teurer Wechselkurs). Bargeld braucht ihr praktisch nicht, £10–20 als Reserve reichen.'},
+ {k:'öpnv tube bahn ticket oyster kontaktlos fahrkarte u-bahn zug fahren',q:'Bahn fahren in London',a:'Kein Ticket kaufen: einfach mit kontaktloser Karte oder Handy an der gelben Schranke tippen, beim Rein- und Rausgehen. <b>Jeder braucht eine eigene Karte/ein eigenes Gerät</b>, sonst wird doppelt abgerechnet bzw. gar nicht. Tageslimit (Cap) wird automatisch angerechnet. Rolltreppe: rechts stehen, links gehen.'},
+ {k:'tasche rucksack koffer gepäck stadion bag clear klarsicht aufbewahrung',q:'Taschen im Stadion',a:'Nur durchsichtige Taschen bis 30×15×30 cm oder ein 1-Gallonen-Gefrierbeutel, dazu eine kleine Clutch (11,5×16,5 cm). Koffer, normale Rucksäcke und Laptops sind verboten. Es gibt <b>keine Gepäckaufbewahrung am Stadion</b>. Darum lasst ihr alles im Hotel.'},
+{k:'ticket eintritt app ticketmaster karte sitz handy wallet mail platz block',q:'Tickets (Wallet)',a:'Die Ticketmaster-App braucht ihr nicht: Die Tickets kommen per Mail und gehören in die <b>Apple Wallet</b>, und genau das hast du gemacht. Eure Plätze stehen im Wallet-Ticket und unter „Notfall → Eure Daten“. Jeder braucht <b>sein eigenes</b> Ticket auf dem eigenen iPhone: Jeder lädt einen anderen Platz: dein Bruder öffnet die weitergeleitete Mail auf seinem iPhone und tippt bei <b>seinem Platz</b> auf „Add to Apple Wallet“. Am Einlass: Steward scannt den QR-Code (Ticket in Wallet → ··· Menü), am Drehkreuz iPhone mit dem Display nach oben an den Leser halten. Akku leer oder Problem: Ticket-Office an der Nordwest-Ecke, Paxton Terrace, mit Name, E-Mail und Ausweis.'},
+ {k:'hinweg anreise stadion weg hin kickoff tottenham white hart lane',q:'Weg zum Stadion',a:'Vom Hotel 9 Min. zu Fuß nach Liverpool Street, dann <b>Weaver line nach White Hart Lane</b> (ca. 22 Min.) und 10 Min. zu Fuß. Alternative: Greater Anglia nach Northumberland Park. Plant 45 Min. von Tür zu Tor.'},
+ {k:'rückweg zurück nach dem spiel heim hotel abreise stadion schlange',q:'Rückweg nach dem Spiel',a:'Laut Stadion ist <b>Northumberland Park → Liverpool Street</b> (Greater Anglia) die beste Verbindung, mit den meisten Zügen. Alle Stationen haben Warteschlangen. 15–20 Min. sitzen bleiben oder zuerst zum NFL Store an der High Road gehen, dann ist es leerer. Bruce Grove ist 2 Std. nach Spielende geschlossen.'},
+{k:'essen hunger restaurant abendessen dinner curry burger frühstück lunch instagram insta foto',q:'Essen (mittleres Budget, fotogen)',a:'<b>Sonntagabend:</b> Dishoom Shoreditch (Bombay-Café-Look, ca. £30–35), Brick Lane Beigel Bake (Kult, £5), Flat Iron Spitalfields (Steak £15), Boxpark Shoreditch (Container-Streetfood). <b>Montag:</b> Full English Breakfast, Leadenhall Market Cafés, Fish & Chips oder Pub-Lunch in Covent Garden. Im Stadion: Bier ca. £7–8.'},
+ {k:'trinkgeld tip service charge',q:'Trinkgeld',a:'Im Restaurant steht oft schon eine „discretionary service charge“ von 12,5 % auf der Rechnung, dann nichts extra. Sonst 10–12,5 %. Im Pub bestellt man an der Bar und gibt kein Trinkgeld.'},
+ {k:'pub bier alkohol ausweis alter challenge 25 bar trinken',q:'Pub-Regeln',a:'Bestellen an der Theke, sofort bezahlen. Wer jünger als 25 aussieht, muss einen Ausweis zeigen („Challenge 25“), Pass oder Personalausweis. Rauchen nur draußen.'},
+ {k:'strom steckdose adapter laden stecker akku powerbank',q:'Strom & Laden',a:'UK hat <b>Stecker Typ G</b> (drei eckige Stifte). Ohne Adapter könnt ihr nicht laden. Gibt es am Flughafen, aber teuer. Powerbank für den Spieltag mitnehmen, Handy-Ticket und Maps brauchen viel Akku.'},
+ {k:'kultur verkehr links straße höflich schlange anstehen benehmen',q:'Kultur & Verhalten',a:'Linksverkehr: beim Überqueren <b>zuerst nach rechts schauen</b> („Look right“ steht auf der Straße). Anstellen ist heilig, nie vordrängeln. „Sorry“ und „Cheers“ (danke) hört ihr ständig. Rolltreppe: rechts stehen.'},
+ {k:'wetter kleidung regen jacke kalt oktober',q:'Wetter & Kleidung',a:'Mitte Oktober meist 10–16 °C, oft Schauer. Regenjacke statt Schirm (große Schirme sind im Stadion verboten). Das Stadion ist teils überdacht, abends wird es kühl.'},
+ {k:'verspätung zu spät flug verspätet störung plan b streik ausfall',q:'Plan B bei Verspätung',a:'Siehe Plan-Reiter unten „Plan B“. Kurz: Bei Verspätung trotzdem nur kurz ins Hotel (Taschen abgeben), dann direkt weiter. Elizabeth line gestört: Piccadilly line bis Holborn, Central line bis Liverpool Street.'},
+ {k:'notfall polizei krank arzt krankenhaus verletzt hilfe 999',q:'Notfall',a:'Notruf <b>999</b> (oder 112). Medizinische Hotline <b>111</b>. Notaufnahme nahe Hotel: Royal London Hospital (Whitechapel). Deutsche Botschaft: +44 20 7824 1300. Mehr im Reiter „Notfall“.'},
+ {k:'verloren karte gestohlen handy weg diebstahl sperren taschendieb',q:'Etwas verloren oder gestohlen',a:'Karte sperren: <b>+49 116 116</b>. Diebstahl bei der Polizei melden (online oder 101). Handy: über „Wo ist?“ bzw. Google „Mein Gerät finden“ orten. In Fan-Massen und in der Tube das Handy vorne tragen.'},
+{k:'montag sightseeing sehenswürdigkeiten tour tower big ben programm spontan instagram insta foto spot',q:'Montag spontan: Insta-Spots',a:'Siehe „Montags-Menü“ im Plan-Reiter. Regel: 14:15 zurück am Hotel. Nah und sicher: Leadenhall Market, St Dunstan in the East, Tower Bridge, Sky Garden. Weiter weg: Big Ben, Platform 9¾, Neal’s Yard.'},
+ {k:'merch trikot shop store fanartikel kaufen',q:'Merch',a:'Im Stadion gibt es keine Merch-Stände. Der NFL Store ist an der Tottenham High Road beim Stadion und hat nach dem Spiel noch geöffnet. Gekaufte Ware in versiegelten Klarsicht-Tüten darf mit ins Stadion.'},
+ {k:'taxi uber bolt auto fahren',q:'Taxi & Uber',a:'Uber und Bolt funktionieren normal. Rund ums Stadion sind Straßen gesperrt und es staut sich, nach dem Spiel ist die Bahn schneller. Black Cabs nehmen Karte.'},
+ {k:'zeit zeitzone uhr stunde zeitverschiebung',q:'Zeitverschiebung',a:'London ist <b>eine Stunde hinter Deutschland</b>. Die Handyuhr stellt sich automatisch um. Eure Flugzeiten (12:30 Landung, 18:35 Abflug) sind deutsche Zeit, also 11:30 und 17:35 in London.'},
+ {k:'toilette wc klo',q:'Toiletten',a:'Bahnhöfe haben Toiletten (meist kostenlos, Liverpool Street ja). Im Stadion viele, in der Halbzeit lange Schlangen: im 2. Viertel kurz vor der Pause gehen.'},
+ {k:'wasser trinken flasche durst',q:'Wasser',a:'Leitungswasser ist trinkbar, im Restaurant kostenlos („tap water, please“). Leere durchsichtige Flasche bis 1 l darf ins Stadion.'},
+ {k:'sicherheit sicher gefährlich nacht',q:'Sicherheit',a:'Aldgate, Shoreditch und die City sind abends belebt und sicher. Übliche Großstadt-Vorsicht: Handy nicht am Straßenrand in der Hand halten (E-Bike-Diebe), Taschen vorne tragen.'},
+ {k:'englisch sprache sätze phrase sagen',q:'Nützliche Sätze',a:'„Could we leave our bags here until later?“ – Können wir die Taschen hier lassen?<br>„Is early check-in possible?“ – Ist früher Check-in möglich?<br>„Which platform for White Hart Lane?“ – Welches Gleis?<br>„Two pints of lager, please.“<br>„Could we get the bill, please?“ – Die Rechnung, bitte.<br>„I need a doctor.“ – Ich brauche einen Arzt.'},
+ {k:'kosten budget preis teuer wieviel',q:'Kosten',a:'Pro Person grob £120–160 vor Ort (Bahn ca. £40, Essen ca. £70, ETA £20), plus Parken in Düsseldorf. Tabelle im Reiter „Wissen“.'},
+ {k:'hotel check in checkin auschecken zimmer leonardo aldgate adresse',q:'Hotel',a:'Leonardo Hotel London Aldgate (früher Hotel Saint), 9 Aldgate High Street, London EC3N 1AH. Nächste Station: Aldgate (1 Min.), Liverpool Street (9 Min.). Check-in meist ab 15 Uhr, Gepäck kann vorher abgegeben werden.'}
+];
+$('#know').innerHTML=K.map(x=>'<details><summary>'+x.q+'</summary><div><p style="margin:0">'+x.a+'</p></div></details>').join('');
+
+/* ---------- currency + costs ---------- */
+const rate=()=>parseFloat($('#rate').value)||1.16;
+$('#rate').value=LS.get('rate',1.16);
+function g2e(){$('#eur').value=(parseFloat($('#gbp').value||0)*rate()).toFixed(2);}
+function e2g(){$('#gbp').value=(parseFloat($('#eur').value||0)/rate()).toFixed(2);}
+$('#gbp').addEventListener('input',g2e);$('#eur').addEventListener('input',e2g);
+$('#rate').addEventListener('input',()=>{LS.set('rate',rate());g2e();costs();});
+g2e();
+const C=[['UK ETA',20],['Elizabeth line Heathrow ↔ Liverpool St (2×)',27],['Tube/Overground So + Mo',10],['Essen & Getränke So (Stadion + Dinner)',50],['Essen Mo (Frühstück + Lunch)',25],['Puffer / Merch',0]];
+function costs(){let s=0;let h='<tr><th>Posten</th><th style="text-align:right">£</th><th style="text-align:right">€</th></tr>';C.forEach(c=>{s+=c[1];h+='<tr><td>'+c[0]+'</td><td class="n">'+c[1]+'</td><td class="n">'+Math.round(c[1]*rate())+'</td></tr>'});h+='<tr><td><b>Summe p.P.</b></td><td class="n"><b>'+s+'</b></td><td class="n"><b>'+Math.round(s*rate())+'</b></td></tr><tr><td class="muted small" colspan="3">Dazu: Parken DUS ca. 40–70 € gesamt, Benzin ca. 20 €. Hotel und Tickets sind schon bezahlt.</td></tr>';$('#costs').innerHTML=h;}
+costs();
+
+/* ---------- assistant ---------- */
+const norm=s=>s.toLowerCase().replace(/[?!.,;:]/g,' ');
+function ask(q){
+  const words=norm(q).split(/\s+/).filter(w=>w.length>2);
+  const scored=K.map(x=>{let sc=0;const kk=x.k.split(' ');words.forEach(w=>{kk.forEach(k=>{if(k===w)sc+=3;else if(k.startsWith(w)||w.startsWith(k))sc+=2;else if(k.length>3&&w.includes(k))sc+=1;});if(norm(x.q).includes(w))sc+=1;});return {x,sc}}).filter(o=>o.sc>0).sort((a,b)=>b.sc-a.sc).slice(0,3);
+  let html=scored.length?scored.map(o=>'<div class="ans"><h4>'+o.x.q+'</h4><div>'+o.x.a+'</div></div>').join(''):'<div class="ans"><h4>Dazu habe ich offline nichts</h4><div>Versuch andere Wörter (z. B. „Rückweg“, „Geld“, „Notfall“) oder frag online weiter.</div></div>';
+  $('#answers').innerHTML=html;
+  const ctx='Ich bin mit meinem Bruder auf einem 2-Tages-Trip in London (So 11.–Mo 12.10.2026), NFL Eagles vs Jaguars im Tottenham Hotspur Stadium, Hotel Leonardo London Aldgate, Rückflug Mo 17:35 ab Heathrow T2. Aktuelle Londoner Zeit: '+fmt(Date.now(),UKZ)+'. Frage: '+q;
+  $('#onlineAsk').innerHTML=navigator.onLine?'<a class="btn primary" target="_blank" rel="noopener" href="https://claude.ai/new?q='+encodeURIComponent(ctx)+'">Claude fragen</a><a class="btn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+encodeURIComponent(q+' London')+'">Google</a><a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/'+encodeURIComponent(q)+'">In Maps suchen</a>':'<span class="muted small">Offline: Online-Suche erscheint, sobald Internet da ist.</span>';
+}
+$('#askForm').addEventListener('submit',e=>{e.preventDefault();const q=$('#q').value.trim();if(q)ask(q);});
+['Wie komme ich zum Stadion?','Rückweg nach dem Spiel','Brauche ich ein Visum?','eSIM oder Roaming?','Wo essen wir heute Abend?','Flug verspätet','Karte verloren','Was machen wir am Montag?'].forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',()=>{$('#q').value=t;ask(t);});$('#quick').appendChild(b);});
+ask('Wie komme ich zum Stadion?');
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(function(){
+    return navigator.serviceWorker.ready;
+  }).then(function(){
+    var p=document.getElementById('net'); if(p){p.title='Offline gespeichert';}
+    var n=document.getElementById('offReady'); if(n) n.hidden=false;
+  }).catch(function(){});
+}
+</script>
+</body></html>

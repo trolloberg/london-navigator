@@ -1,0 +1,15 @@
+{
+  "name": "London Gameday Navigator",
+  "short_name": "LDN Gameday",
+  "description": "Offline-Reiseassistent für Eagles @ Jaguars, London 11.–12.10.2026",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d2326",
+  "theme_color": "#0d2326",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

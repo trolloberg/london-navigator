@@ -239,6 +239,21 @@ section p{margin:0}
   <section id="ask">
     <h2>Reise-Assistent</h2>
     <p class="muted small">Funktioniert offline mit allem, was in dieser Seite steckt. Mit Internet kannst du die Frage zusätzlich an Claude oder Google schicken.</p>
+    <div class="alert" style="gap:10px">
+      <strong>Plan live anpassen</strong>
+      <span class="small muted">Schreibt eure Wünsche in der gewünschten Reihenfolge. Die App rechnet Wegzeiten und Öffnungszeiten, holt bei Bedarf das Gepäck und sorgt dafür, dass ihr rechtzeitig in Heathrow seid. Funktioniert offline.</span>
+      <textarea id="wish" rows="3" aria-label="Eure Wünsche"></textarea>
+      <div class="chips" id="pChips"></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+        <label class="small muted" style="display:grid;gap:3px">Start (leer = jetzt)<span style="display:flex;gap:6px"><input type="time" id="pStart" style="flex:1;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><button type="button" id="pNow">Jetzt</button></span></label>
+        <label class="small muted" style="display:grid;gap:3px">Ihr seid gerade<select id="pFrom" style="font:inherit;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"><option value="hotel">im Hotel (Aldgate)</option><option value="westminster">in Westminster</option><option value="buckingham">am Buckingham Palace</option><option value="covent">in Covent Garden</option><option value="tcr">an Tottenham Court Road</option><option value="liverpool">an Liverpool Street</option><option value="tower">an der Tower Bridge</option></select></label>
+        <label class="small muted" style="display:grid;gap:3px">Spätestens am Flughafen<input type="time" id="pDead" value="15:30" style="font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)"></label>
+      </div>
+      <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pBags" checked style="width:20px;height:20px;accent-color:var(--accent)"> Gepäck liegt im Hotel und muss vorher abgeholt werden</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" type="button" id="mkPlan">Plan erstellen</button><button type="button" id="clrPlan">Original-Plan</button></div>
+      <div id="planOut" style="display:grid;gap:8px"></div>
+    </div>
+    <h3>Frag den Assistenten</h3>
     <div class="chat">
       <form id="askForm"><input type="text" id="q" placeholder="z. B. Wie komme ich nach dem Spiel zurück?" autocomplete="off"><button class="primary" type="submit">Fragen</button></form>
       <div class="chips" id="quick"></div>
@@ -269,7 +284,7 @@ const HOTEL='Leonardo Hotel London Aldgate, 9 Aldgate High Street, London EC3N 1
 const STADIUM='Tottenham Hotspur Stadium, London N17 0BX';
 
 /* ---------- schedule: times with explicit offsets (DE = +02:00, UK = +01:00) ---------- */
-const S=[
+let S=[
  {d:'Sonntag 11.10.',t:'2026-10-11T07:00+02:00',z:'DE',w:'Aufstehen, frühstücken',h:'Reisepass, Handy, Ladekabel, Adapter (Typ G) einpacken. ETA prüfen.',tags:['Haltern']},
  {t:'2026-10-11T07:50+02:00',z:'DE',w:'Abfahrt Haltern am See',h:'Ca. 70 km über A43/A52, sonntags ca. 55 Min. Parkplatz am besten vorab buchen.',tags:['Auto','55 Min.'],k:1},
  {t:'2026-10-11T08:50+02:00',z:'DE',w:'Parken am Flughafen DUS',h:'Vom Parkhaus zum Terminal 5–15 Min. (je nach Parkplatz, ggf. SkyTrain).',tags:['15 Min.']},
@@ -305,7 +320,7 @@ const S=[
  {t:'2026-10-12T20:00+02:00',z:'DE',w:'Landung Düsseldorf',h:'Zum Parkhaus, ca. 20 Min.',tags:['DUS']},
  {t:'2026-10-12T21:15+02:00',z:'DE',w:'Zuhause in Haltern',h:'Geschafft.',tags:['Auto 55 Min.'],k:1}
 ];
-const T=S.map(s=>new Date(s.t).getTime());
+let T=S.map(s=>new Date(s.t).getTime());
 const fmt=(ms,tz)=>new Intl.DateTimeFormat('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:tz}).format(ms);
 const UKZ='Europe/London',DEZ='Europe/Berlin';
 
@@ -454,6 +469,7 @@ const K=[
  {k:'wasser trinken flasche durst',q:'Wasser',a:'Leitungswasser ist trinkbar, im Restaurant kostenlos („tap water, please“). Leere durchsichtige Flasche bis 1 l darf ins Stadion.'},
  {k:'sicherheit sicher gefährlich nacht',q:'Sicherheit',a:'Aldgate, Shoreditch und die City sind abends belebt und sicher. Übliche Großstadt-Vorsicht: Handy nicht am Straßenrand in der Hand halten (E-Bike-Diebe), Taschen vorne tragen.'},
  {k:'englisch sprache sätze phrase sagen',q:'Nützliche Sätze',a:'„Could we leave our bags here until later?“ – Können wir die Taschen hier lassen?<br>„Is early check-in possible?“ – Ist früher Check-in möglich?<br>„Which platform for White Hart Lane?“ – Welches Gleis?<br>„Two pints of lager, please.“<br>„Could we get the bill, please?“ – Die Rechnung, bitte.<br>„I need a doctor.“ – Ich brauche einen Arzt.'},
+ {k:'plan ändern anpassen wunsch wünsche umplanen live heute programm',q:'Plan live anpassen',a:'Oben in diesem Reiter unter „Plan live anpassen“ eure Wünsche eintippen (Reihenfolge zählt, Minuten optional, z. B. „Harrods 40 min“) und „Plan erstellen“ tippen. Der Zeitplan und der Jetzt-Countdown passen sich sofort an.'},
  {k:'kosten budget preis teuer wieviel',q:'Kosten',a:'Pro Person grob £120–160 vor Ort (Bahn ca. £40, Essen ca. £70, ETA £20), plus Parken in Düsseldorf. Tabelle im Reiter „Wissen“.'},
  {k:'hotel check in checkin auschecken zimmer leonardo aldgate adresse',q:'Hotel',a:'Leonardo Hotel London Aldgate (früher Hotel Saint), 9 Aldgate High Street, London EC3N 1AH. Nächste Station: Aldgate (1 Min.), Liverpool Street (9 Min.). Check-in meist ab 15 Uhr, Gepäck kann vorher abgegeben werden.'}
 ];
@@ -483,18 +499,155 @@ function ask(q){
 }
 $('#askForm').addEventListener('submit',e=>{e.preventDefault();const q=$('#q').value.trim();if(q)ask(q);});
 ['Wie komme ich zum Stadion?','Rückweg nach dem Spiel','Brauche ich ein Visum?','eSIM oder Roaming?','Wo essen wir heute Abend?','Flug verspätet','Karte verloren','Was machen wir am Montag?'].forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',()=>{$('#q').value=t;ask(t);});$('#quick').appendChild(b);});
+/* ---------- live planner: wishes -> new schedule (offline) ---------- */
+const BASE_S=S.slice();
+const FLIGHT=new Date('2026-10-12T17:35+01:00').getTime();
+const HOTEL_P={id:'hotel',n:'Hotel: Gepäck holen',lat:51.5138,lon:-0.0755,d:10,q:HOTEL};
+const P={
+ breakfast:{k:['frühstück','fruehstueck','breakfast','british','english','full english','fry','regency'],c:[
+   {n:'Regency Café (Full English)',lat:51.4943,lon:-0.1328,d:50,o:7,cl:15.5,q:'Regency Cafe, 17-19 Regency St, London SW1P 4BY',x:'Kult-Diner, Kartenzahlung, kurze Schlange möglich'},
+   {n:'The Breakfast Club Spitalfields',lat:51.5175,lon:-0.0771,d:50,o:8,cl:17,q:'The Breakfast Club Spitalfields, London',x:'Nah am Hotel, beliebt'}]},
+ bigben:{k:['big ben','bigben','westminster','parliament','parlament','elizabeth tower'],c:[{n:'Big Ben & Westminster Bridge',lat:51.5007,lon:-0.1246,d:25,q:'Westminster Bridge, London',x:'Bestes Foto von der Brücke'}]},
+ abbey:{k:['abbey','abtei'],c:[{n:'Westminster Abbey (außen)',lat:51.4994,lon:-0.1273,d:15,q:'Westminster Abbey'}]},
+ eye:{k:['london eye','riesenrad','eye'],c:[{n:'London Eye (außen)',lat:51.5033,lon:-0.1196,d:20,q:'London Eye'}]},
+ buckingham:{k:['buckingham','palast','palace','könig','king'],c:[{n:'Buckingham Palace',lat:51.5014,lon:-0.1419,d:30,q:'Buckingham Palace',x:'Fotos am Victoria Memorial'}]},
+ park:{k:['st james','park'],c:[{n:'St James’s Park',lat:51.5025,lon:-0.1348,d:20,q:'St James\'s Park'}]},
+ trafalgar:{k:['trafalgar'],c:[{n:'Trafalgar Square',lat:51.508,lon:-0.1281,d:15,q:'Trafalgar Square'}]},
+ piccadilly:{k:['piccadilly'],c:[{n:'Piccadilly Circus',lat:51.5101,lon:-0.134,d:15,q:'Piccadilly Circus'}]},
+ covent:{k:['covent','neal'],c:[{n:'Covent Garden',lat:51.5117,lon:-0.124,d:40,q:'Covent Garden Piazza'}]},
+ shake:{k:['shake shack','shakeshack','shake shak','shake','burger'],c:[
+   {n:'Shake Shack Tottenham Court Road',lat:51.5166,lon:-0.1287,d:60,o:11,cl:22,q:'Shake Shack, 80 New Oxford Street, London WC1A 1HB',x:'Direkt an der Elizabeth line nach Heathrow'},
+   {n:'Shake Shack Covent Garden',lat:51.5119,lon:-0.1231,d:60,o:11,cl:22,q:'Shake Shack Covent Garden Market Building'},
+   {n:'Shake Shack Leicester Square',lat:51.5103,lon:-0.1316,d:60,o:11,cl:22,q:'Shake Shack, 1-2 Coventry Street, London'},
+   {n:'Shake Shack Mansion House',lat:51.5114,lon:-0.0927,d:60,o:11,cl:21,q:'Shake Shack, 45 Cannon Street, London'}]},
+ starbucks:{k:['starbucks','kaffee','coffee','café to go','to go'],near:true,c:[{n:'Starbucks: Coffee to go',d:15,q:'Starbucks',x:'Nächste Filiale auf dem Weg'}]},
+ pub:{k:['pub','bier','pint'],near:true,c:[{n:'Pub-Pause',d:45,q:'pub'}]},
+ fish:{k:['fish','chips'],c:[{n:'Poppies Fish & Chips Spitalfields',lat:51.5197,lon:-0.0738,d:45,o:11,cl:22,q:'Poppies Fish and Chips Spitalfields'}]},
+ towerbridge:{k:['tower bridge','brücke'],c:[{n:'Tower Bridge',lat:51.5055,lon:-0.0754,d:25,q:'Tower Bridge'}]},
+ tower:{k:['tower of london','kronjuwelen','tower'],c:[{n:'Tower of London',lat:51.5081,lon:-0.0759,d:90,o:10,cl:17.5,q:'Tower of London',x:'Mo ab 10 Uhr, ca. £35'}]},
+ sky:{k:['sky garden','skygarden','aussicht'],c:[{n:'Sky Garden',lat:51.5113,lon:-0.0836,d:45,o:10,cl:18,q:'Sky Garden, 20 Fenchurch St',x:'Gratis, Slot buchen'}]},
+ leaden:{k:['leadenhall','harry potter'],c:[{n:'Leadenhall Market',lat:51.5128,lon:-0.0835,d:20,q:'Leadenhall Market'}]},
+ dunstan:{k:['dunstan','ruine'],c:[{n:'St Dunstan in the East',lat:51.5098,lon:-0.0832,d:15,q:'St Dunstan in the East'}]},
+ borough:{k:['borough','markt','market'],c:[{n:'Borough Market',lat:51.5055,lon:-0.091,d:40,q:'Borough Market'}]},
+ stpauls:{k:['st paul','paul','millennium'],c:[{n:'St Paul’s & Millennium Bridge',lat:51.5115,lon:-0.0985,d:25,q:'St Paul\'s Cathedral'}]},
+ nine:{k:['9¾','9 3/4','platform','gleis','kings cross','king’s cross'],c:[{n:'Platform 9¾ (King’s Cross)',lat:51.532,lon:-0.1233,d:30,q:'Platform 9 3/4 Kings Cross'}]},
+ camden:{k:['camden'],c:[{n:'Camden Market',lat:51.539,lon:-0.1426,d:60,q:'Camden Market'}]},
+ oxford:{k:['oxford','shopping','einkaufen','primark'],c:[{n:'Oxford Street',lat:51.5152,lon:-0.1418,d:45,q:'Oxford Circus'}]},
+ harrods:{k:['harrods'],c:[{n:'Harrods',lat:51.4994,lon:-0.1632,d:45,o:10,cl:21,q:'Harrods'}]},
+ notting:{k:['notting','bunte häuser'],c:[{n:'Notting Hill',lat:51.5113,lon:-0.2005,d:45,q:'Portobello Road'}]},
+ brick:{k:['brick lane','street art','shoreditch'],c:[{n:'Brick Lane & Street Art',lat:51.5215,lon:-0.0717,d:30,q:'Brick Lane'}]},
+ hotel:{k:['hotel','gepäck','koffer','taschen'],c:[HOTEL_P]}
+};
+const ELIZ=[['Tottenham Court Road',51.5163,-0.131,33],['Bond Street',51.5142,-0.1494,30],['Paddington',51.5154,-0.1755,27],['Farringdon',51.5203,-0.1053,37],['Liverpool Street',51.5178,-0.0823,40],['Whitechapel',51.5195,-0.0597,43]];
+const km=(a,b)=>{const R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lon-a.lon)*r;const h=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
+function leg(a,b){ if(!a||!b) return {m:0,how:''}; const d=km(a,b); if(d<0.05) return {m:0,how:''};
+  const walk=Math.ceil(d*1.3/4.8*60), tube=Math.ceil(12+d*2.6);
+  return walk<=tube||d<1.3?{m:walk,how:'zu Fuß ('+walk+' Min.)',mode:'walking'}:{m:tube,how:'Tube/Bus (ca. '+tube+' Min.)',mode:'transit'}; }
+function airLeg(a){ let best=null; ELIZ.forEach(e=>{const st={lat:e[1],lon:e[2]};const l=leg(a,st);const m=l.m+e[3]+12;if(!best||m<best.m)best={m,how:(l.m?l.how.replace(/ \(.*/,'')+' bis '+e[0]+', ':'Ab '+e[0]+' ')+'Elizabeth line nach Heathrow T2&3 ('+e[3]+' Min.) + 12 Min. ins Terminal',st:e[0]};}); return best; }
+function matchSeg(seg){ const s=seg.toLowerCase(); let hit=null,len=0;
+  Object.entries(P).forEach(([id,p])=>p.k.forEach(k=>{if(s.includes(k)&&k.length>len){hit=id;len=k.length;}})); return hit; }
+function parseWish(t){ return t.split(/\n|,|;|\bdanach\b|\bdann\b|\banschließend\b|\bund\b|\bbevor\b|\bzwischenzeit\b/i).map(x=>x.trim()).filter(x=>x.length>2)
+  .filter(x=>!/flughafen|airport|heathrow/i.test(x)).map(x=>{const id=matchSeg(x);const dm=x.match(/(\d{1,3})\s*min/i);return {raw:x,id,dur:dm?+dm[1]:null};}); }
+function hhmm(ms){return fmt(ms,UKZ);}
+function ukHour(ms){const p=new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:UKZ}).format(ms).split(':');return +p[0]+p[1]/60;}
+function buildPlan(o){
+  const items=parseWish(o.wish); const unknown=[];
+  let seq=items.map(it=>{ if(!it.id){unknown.push(it.raw);return {n:it.raw.charAt(0).toUpperCase()+it.raw.slice(1),d:it.dur||30,near:true,q:it.raw,x:'Eigener Wunsch, Ort nicht hinterlegt'};}
+    const p=P[it.id]; return {grp:it.id,cands:p.c,near:!!p.near,d:it.dur}; });
+  if(o.bags && !seq.some(s=>s.grp==='hotel')){ // insert hotel where it costs the least
+    let best=null; for(let i=Math.max(o.from&&o.from.id==='hotel'?1:0,seq.length-1);i<=seq.length;i++){ // pick bags up late: before or after the last stop
+    const t=seq.slice();t.splice(i,0,{grp:'hotel',cands:[HOTEL_P]});const r=schedule(t,o,true);if(!best||r.arr<best.arr)best={t,arr:r.arr};} seq=best.t; }
+  let r=schedule(seq,o,false); r.unknown=unknown; return r; }
+function schedule(seq,o,quick){
+  let t=o.start, pos=o.from, out=[];
+  seq.forEach((s,i)=>{
+    let c=s.cands?s.cands[0]:s;
+    if(s.cands&&s.cands.length>1){ // choose candidate: travel in + travel to next fixed point (or airport)
+      const nxt=seq.slice(i+1).find(x=>x.cands&&!x.near&&x.cands[0].lat); const nP=nxt?nxt.cands[0]:null;
+      let bc=null,bm=1e9; s.cands.forEach((cd,ci)=>{const m=leg(pos,cd).m+(nP?leg(cd,nP).m:airLeg(cd).m)+(ci?10:0); // first candidate is our favourite
+     if(m<bm){bm=m;bc=cd;}}); c=bc; }
+    const place=(s.near||!c.lat)?Object.assign({},c,{lat:pos.lat,lon:pos.lon}):c;
+    const l=leg(pos,place); t+=l.m*60e3;
+    let wait=0; if(c.o!=null){const h=ukHour(t); if(h<c.o){wait=Math.round((c.o-h)*60);t+=wait*60e3;}}
+    const dur=(s.d||c.d||30);
+    out.push({n:c.n,x:c.x||'',q:c.q,at:t,dur,leg:l,wait,from:pos,place,cl:c.cl,flex:dur});
+    t+=dur*60e3; pos=place; });
+  const a=airLeg(pos); const arr=t+a.m*60e3;
+  return {steps:out,air:a,arr,pos};
+}
+function fitDeadline(r,o){
+  const dl=o.deadline; let diff=Math.round((r.arr-dl)/60e3); const notes=[];
+  if(diff>0){ // too late: shrink stays to min 60%
+    let room=r.steps.reduce((s,x)=>s+(x.n===HOTEL_P.n?0:Math.floor(x.dur*0.4)),0); const cut=Math.min(diff,room); let left=cut;
+    for(let i=r.steps.length-1;i>=0&&left>0;i--){if(r.steps[i].n===HOTEL_P.n)continue;const c=Math.min(left,Math.floor(r.steps[i].dur*0.4));r.steps[i].dur-=c;left-=c;}
+    if(cut) notes.push({k:'warn',t:'Aufenthalte um '+cut+' Min. gekürzt, damit ihr rechtzeitig am Flughafen seid.'});
+    if(diff>cut) notes.push({k:'crit',t:'Immer noch '+(diff-cut)+' Min. zu spät. Streicht einen Programmpunkt oder nehmt die Taschen gleich mit.'});
+  } else if(diff<0 && r.steps.length){ // spare time: give it to the last stop (max +60)
+    const last=[...r.steps].reverse().find(x=>x.n!==HOTEL_P.n)||r.steps[r.steps.length-1]; const add=Math.min(-diff,60); last.dur+=add;
+    notes.push({k:'ok',t:add+' Min. extra bei „'+last.n+'“ eingeplant'+(-diff>add?', dazu '+(-diff-add)+' Min. Puffer am Flughafen':'')+'.'});
+  }
+  // re-time
+  let t=o.start; r.steps.forEach(s=>{t+=s.leg.m*60e3; if(s.wait)t+=s.wait*60e3; s.at=t; t+=s.dur*60e3; s.end=t; if(s.cl&&ukHour(t)>s.cl) notes.push({k:'warn',t:s.n+' schließt um '+String(Math.floor(s.cl)).padStart(2,'0')+':'+String(Math.round(s.cl%1*60)).padStart(2,'0')+'.'});});
+  r.leave=t; r.arr=t+r.air.m*60e3; r.notes=notes; return r;
+}
+function planToSteps(r){
+  const st=[];
+  r.steps.forEach(s=>{st.push({t:new Date(s.at).toISOString(),z:'UK',w:s.n,h:(s.leg.m?'Anreise '+s.leg.how+'. ':'')+(s.wait?'Öffnet erst, '+s.wait+' Min. Wartezeit. ':'')+s.x,tags:[s.dur+' Min.','Wunsch'],k:1,live:1,q:s.q,mode:s.leg.mode});});
+  st.push({t:new Date(r.leave).toISOString(),z:'UK',w:'Los zum Flughafen',h:r.air.how+'. Gate schließt 17:15.',tags:['ca. '+r.air.m+' Min.','Deadline'],k:1,live:1,q:'Heathrow Terminal 2',mode:'transit'});
+  st.push({t:new Date(r.arr).toISOString(),z:'UK',w:'Ankunft Heathrow Terminal 2, Security',h:'Eurowings fliegt ab Terminal 2.',tags:['LHR T2'],live:1});
+  return st;
+}
+function applyPlan(st,from){
+  const first=from||(st.length?new Date(st[0].t).getTime():Infinity);
+  const before=BASE_S.filter(s=>new Date(s.t).getTime()<first-60e3);
+  const after=BASE_S.filter(s=>new Date(s.t).getTime()>=FLIGHT);
+  const mon=before.findIndex(s=>s.d&&s.d.startsWith('Montag'));
+  const merged=before.concat(st,after);
+  if(!merged.some(s=>s.d&&s.d.startsWith('Montag'))){const i=before.length;if(merged[i])merged[i]=Object.assign({d:'Montag 12.10. · Live-Plan'},merged[i]);}
+  S=merged; T=S.map(s=>new Date(s.t).getTime()); renderTimeline(); tick();
+}
+function planHTML(r,o){
+  let h='<div class="alert '+(r.arr<=o.deadline?'ok':'crit')+'"><strong>'+(r.arr<=o.deadline?'Passt: Ankunft Flughafen '+hhmm(r.arr):'Achtung: Ankunft Flughafen '+hhmm(r.arr))+'</strong><span>Spätestens um <b>'+hhmm(r.leave)+'</b> losfahren. Abflug 17:35.</span></div>';
+  r.notes.forEach(n=>h+='<div class="alert '+n.k+'"><span>'+n.t+'</span></div>');
+  if(r.unknown.length) h+='<div class="alert warn"><span>Nicht erkannt, als 30-Min.-Punkt am letzten Ort eingeplant: '+r.unknown.map(x=>'„'+x+'“').join(', ')+'. Tipp: Wunsch genauer benennen oder Minuten angeben, z. B. „Harrods 40 min“.</span></div>';
+  h+='<div class="day">';
+  r.steps.forEach(s=>{h+='<div class="step"><div class="t">'+hhmm(s.at)+'<small>bis '+hhmm(s.end)+'</small></div><div class="c"><b>'+s.n+'</b><span class="small muted">'+(s.leg.m?'Anreise '+s.leg.how:'Direkt hier')+(s.x?' · '+s.x:'')+'</span><div class="meta"><a class="chip" target="_blank" rel="noopener" href="'+gm(s.from.q||(s.from.lat+','+s.from.lon),s.q,s.leg.mode||'walking')+'">Route ↗</a></div></div></div>';});
+  h+='<div class="step"><div class="t">'+hhmm(r.leave)+'</div><div class="c"><b>Los zum Flughafen</b><span class="small muted">'+r.air.how+'</span></div></div></div>';
+  return h;
+}
+function nowUKStart(){const n=Date.now();const day='2026-10-12';const d0=new Date(day+'T09:15+01:00').getTime();const d1=new Date(day+'T16:00+01:00').getTime();return (n>d0&&n<d1)?Math.ceil(n/300e3)*300e3:d0;}
+function runPlanner(save){
+  const tv=$('#pStart').value; const start=tv?new Date('2026-10-12T'+tv+'+01:00').getTime():nowUKStart();
+  const dv=$('#pDead').value||'15:30';
+  const fromSel=$('#pFrom').value; const from=FROM[fromSel]||FROM.hotel;
+  const o={wish:$('#wish').value,start,bags:$('#pBags').checked,deadline:new Date('2026-10-12T'+dv+'+01:00').getTime(),from};
+  let r=buildPlan(o); r=fitDeadline(r,o);
+  $('#planOut').innerHTML=planHTML(r,o);
+  const st=planToSteps(r); applyPlan(st,o.start);
+  if(save) LS.set('livePlan',{at:o.start,wish:o.wish,start:tv,bags:o.bags,dead:dv,from:fromSel,steps:st});
+}
+const FROM={hotel:Object.assign({},HOTEL_P,{q:HOTEL}),westminster:{lat:51.501,lon:-0.1247,q:'Westminster Station, London'},buckingham:{lat:51.5014,lon:-0.1419,q:'Buckingham Palace'},covent:{lat:51.5117,lon:-0.124,q:'Covent Garden'},tcr:{lat:51.5163,lon:-0.131,q:'Tottenham Court Road Station'},liverpool:{lat:51.5178,lon:-0.0823,q:'Liverpool Street Station'},tower:{lat:51.5055,lon:-0.0754,q:'Tower Bridge'}};
+$('#pStart').value='';
+const saved=LS.get('livePlan',null);
+$('#wish').value=saved?saved.wish:'Lecker British Frühstück, Big Ben, Starbucks Coffee to go, Buckingham Palace, Shake Shack in Ruhe';
+if(saved){$('#pBags').checked=!!saved.bags;$('#pDead').value=saved.dead||'15:30';$('#pFrom').value=saved.from||'hotel';$('#pStart').value=saved.start||'';}
+$('#mkPlan').addEventListener('click',()=>{runPlanner(true);});
+$('#clrPlan').addEventListener('click',()=>{LS.set('livePlan',null);S=BASE_S.slice();T=S.map(s=>new Date(s.t).getTime());renderTimeline();tick();$('#planOut').innerHTML='<div class="alert"><span>Original-Plan wiederhergestellt.</span></div>';});
+$('#pNow').addEventListener('click',()=>{$('#pStart').value=new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:UKZ}).format(Math.ceil(Date.now()/300e3)*300e3);});
+const PCH=['Frühstück','Big Ben','Buckingham Palace','Starbucks','Shake Shack','Tower Bridge','Sky Garden','Covent Garden','Platform 9¾','Harrods','Camden','Pub'];
+PCH.forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent='+ '+t;b.addEventListener('click',()=>{const w=$('#wish');w.value=(w.value.trim()?w.value.trim()+', ':'')+t;});$('#pChips').appendChild(b);});
+if(saved&&saved.steps){applyPlan(saved.steps,saved.at);$('#planOut').innerHTML='<div class="alert ok"><span>Gespeicherter Live-Plan aktiv. „Plan erstellen“ rechnet ab jetzt neu.</span></div>';}
+else runPlanner(false);
+
 ask('Wie komme ich zum Stadion?');
 })();
 </script>
 
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(function(){
-    return navigator.serviceWorker.ready;
-  }).then(function(){
-    var p=document.getElementById('net'); if(p){p.title='Offline gespeichert';}
-    var n=document.getElementById('offReady'); if(n) n.hidden=false;
-  }).catch(function(){});
+  navigator.serviceWorker.register('sw.js').then(function(){ return navigator.serviceWorker.ready; })
+  .then(function(){ var n=document.getElementById('offReady'); if(n) n.hidden=false; }).catch(function(){});
+  var reloaded=false; navigator.serviceWorker.addEventListener('controllerchange',function(){ if(!reloaded){reloaded=true;location.reload();} });
 }
 </script>
 </body></html>

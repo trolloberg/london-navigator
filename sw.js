@@ -1,5 +1,5 @@
 // Offline cache for London Gameday Navigator. Bump VERSION to ship updates.
-const VERSION = 'ldn-v1';
+const VERSION = 'ldn-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './Navigator-offline.pdf'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));

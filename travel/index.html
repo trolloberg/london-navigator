@@ -187,6 +187,17 @@ svg.i.sm{width:18px;height:18px}
 .kv span:nth-child(odd){color:var(--muted)}
 .note{background:var(--hot-soft);color:var(--hot);border-radius:14px;padding:12px 14px;font-size:.9rem}
 .info{background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:12px 14px;font-size:.9rem}
+.lang-hd{display:flex;align-items:center;gap:12px}
+.cell.ph{cursor:pointer}
+.ph-n{font-size:1.08rem;font-weight:600;line-height:1.35;margin-top:2px}
+.ph-h{font-size:.86rem;color:var(--muted);font-style:italic;margin-top:2px}
+.say{width:38px;height:38px;border-radius:50%;border:0;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none}
+.show-ov{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(var(--safe-t) + 28px) 24px calc(var(--safe-b) + 64px);animation:fd .2s}
+.show-ov .de{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:18px}
+.show-ov .big{font-size:2.6rem;font-weight:700;line-height:1.2;letter-spacing:-.015em;overflow-wrap:anywhere}
+.show-ov .big.long{font-size:1.9rem}
+.show-ov .hint{font-size:1.1rem;color:var(--muted);font-style:italic;margin-top:14px}
+.show-ov .x{position:absolute;left:0;right:0;bottom:calc(var(--safe-b) + 22px);font-size:.85rem;color:var(--muted)}
 .qty{font-size:.8rem;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:2px 7px;margin-right:6px}
 .hide{display:none!important}
 </style>
@@ -202,79 +213,258 @@ svg.i.sm{width:18px;height:18px}
    OpenStreetMap/Overpass (echte Sehenswürdigkeiten),
    Frankfurter (EZB-Wechselkurse).
    ========================================================= */
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.3.0';
 const LS_KEY = 'ta.trips.v1';
 
 const COUNTRIES = {
-  GB:{n:'Großbritannien',cur:'GBP',em:'999 oder 112',plug:'G',lang:'en',tip:'10–12,5 % im Restaurant, oft schon als „service charge“ auf der Rechnung. Im Pub kein Trinkgeld am Tresen.',drive:'links'},
-  IE:{n:'Irland',cur:'EUR',em:'112 oder 999',plug:'G',lang:'en',tip:'10–15 % im Restaurant, Pub kein Muss.',drive:'links'},
-  FR:{n:'Frankreich',cur:'EUR',em:'112',plug:'C/E',lang:'fr',tip:'Service ist inklusive, Aufrunden oder 5 % bei gutem Service.',drive:'rechts'},
-  ES:{n:'Spanien',cur:'EUR',em:'112',plug:'C/F',lang:'es',tip:'5–10 % oder aufrunden.',drive:'rechts'},
-  PT:{n:'Portugal',cur:'EUR',em:'112',plug:'C/F',lang:'pt',tip:'5–10 % oder aufrunden.',drive:'rechts'},
-  IT:{n:'Italien',cur:'EUR',em:'112',plug:'C/F/L',lang:'it',tip:'„Coperto“ steht oft auf der Rechnung, Trinkgeld optional (aufrunden).',drive:'rechts'},
-  NL:{n:'Niederlande',cur:'EUR',em:'112',plug:'C/F',lang:'nl',tip:'5–10 % oder aufrunden. Viele Läden nur Karte.',drive:'rechts'},
-  BE:{n:'Belgien',cur:'EUR',em:'112',plug:'C/E',lang:'nl',tip:'Service inklusive, aufrunden ist nett.',drive:'rechts'},
-  LU:{n:'Luxemburg',cur:'EUR',em:'112',plug:'C/F',lang:'fr',tip:'5–10 %.',drive:'rechts'},
-  AT:{n:'Österreich',cur:'EUR',em:'112',plug:'C/F',lang:'de',tip:'5–10 %, beim Bezahlen direkt sagen.',drive:'rechts'},
-  CH:{n:'Schweiz',cur:'CHF',em:'112 (Polizei 117, Rettung 144)',plug:'J (C passt)',lang:'de',tip:'Service inklusive, aufrunden.',drive:'rechts'},
-  DE:{n:'Deutschland',cur:'EUR',em:'112 (Polizei 110)',plug:'C/F',lang:'de',tip:'5–10 %.',drive:'rechts'},
-  DK:{n:'Dänemark',cur:'DKK',em:'112',plug:'K (C passt)',lang:'da',tip:'Service inklusive, Trinkgeld optional.',drive:'rechts'},
-  SE:{n:'Schweden',cur:'SEK',em:'112',plug:'C/F',lang:'sv',tip:'Optional, 5–10 %. Fast überall nur Karte.',drive:'rechts'},
-  NO:{n:'Norwegen',cur:'NOK',em:'112 (Polizei), 113 (Rettung)',plug:'C/F',lang:'no',tip:'Optional, aufrunden.',drive:'rechts'},
-  FI:{n:'Finnland',cur:'EUR',em:'112',plug:'C/F',lang:'fi',tip:'Nicht erwartet.',drive:'rechts'},
-  IS:{n:'Island',cur:'ISK',em:'112',plug:'C/F',lang:'is',tip:'Nicht erwartet.',drive:'rechts'},
-  PL:{n:'Polen',cur:'PLN',em:'112',plug:'C/E',lang:'pl',tip:'ca. 10 %.',drive:'rechts'},
-  CZ:{n:'Tschechien',cur:'CZK',em:'112',plug:'C/E',lang:'cs',tip:'ca. 10 %, beim Bezahlen sagen.',drive:'rechts'},
-  HU:{n:'Ungarn',cur:'HUF',em:'112',plug:'C/F',lang:'hu',tip:'10–15 %, Service-Aufschlag prüfen.',drive:'rechts'},
-  HR:{n:'Kroatien',cur:'EUR',em:'112',plug:'C/F',lang:'hr',tip:'ca. 10 %.',drive:'rechts'},
-  SI:{n:'Slowenien',cur:'EUR',em:'112',plug:'C/F',lang:'sl',tip:'5–10 %.',drive:'rechts'},
-  SK:{n:'Slowakei',cur:'EUR',em:'112',plug:'C/E',lang:'sk',tip:'5–10 %.',drive:'rechts'},
-  GR:{n:'Griechenland',cur:'EUR',em:'112',plug:'C/F',lang:'el',tip:'5–10 % oder aufrunden.',drive:'rechts'},
-  CY:{n:'Zypern',cur:'EUR',em:'112',plug:'G',lang:'el',tip:'ca. 10 %.',drive:'links'},
-  MT:{n:'Malta',cur:'EUR',em:'112',plug:'G',lang:'en',tip:'5–10 %.',drive:'links'},
-  RO:{n:'Rumänien',cur:'RON',em:'112',plug:'C/F',lang:'ro',tip:'ca. 10 %.',drive:'rechts'},
-  BG:{n:'Bulgarien',cur:'EUR',em:'112',plug:'C/F',lang:'bg',tip:'ca. 10 %.',drive:'rechts'},
-  EE:{n:'Estland',cur:'EUR',em:'112',plug:'C/F',lang:'et',tip:'Optional, 5–10 %.',drive:'rechts'},
-  LV:{n:'Lettland',cur:'EUR',em:'112',plug:'C/F',lang:'lv',tip:'Optional, 5–10 %.',drive:'rechts'},
-  LT:{n:'Litauen',cur:'EUR',em:'112',plug:'C/F',lang:'lt',tip:'Optional, 5–10 %.',drive:'rechts'},
-  TR:{n:'Türkei',cur:'TRY',em:'112',plug:'C/F',lang:'tr',tip:'5–10 %.',drive:'rechts'},
-  US:{n:'USA',cur:'USD',em:'911',plug:'A/B (110 V)',lang:'en',tip:'18–20 % im Restaurant sind Pflicht-Kultur, 1–2 $ pro Drink.',drive:'rechts'},
-  CA:{n:'Kanada',cur:'CAD',em:'911',plug:'A/B (110 V)',lang:'en',tip:'15–20 %.',drive:'rechts'},
-  MX:{n:'Mexiko',cur:'MXN',em:'911',plug:'A/B (127 V)',lang:'es',tip:'10–15 %.',drive:'rechts'},
-  AE:{n:'Vereinigte Arabische Emirate',cur:'AED',em:'999 (Polizei), 998 (Rettung)',plug:'G',lang:'en',tip:'10–15 %, Service-Charge prüfen.',drive:'rechts'},
-  EG:{n:'Ägypten',cur:'EGP',em:'122 (Polizei), 123 (Rettung)',plug:'C/F',lang:'ar',tip:'10–15 %, kleines Bakschisch üblich.',drive:'rechts'},
-  MA:{n:'Marokko',cur:'MAD',em:'19 (Polizei), 15 (Rettung)',plug:'C/E',lang:'fr',tip:'ca. 10 %.',drive:'rechts'},
-  TN:{n:'Tunesien',cur:'TND',em:'197 (Polizei), 190 (Rettung)',plug:'C/E',lang:'fr',tip:'ca. 10 %.',drive:'rechts'},
-  TH:{n:'Thailand',cur:'THB',em:'191 (Polizei), 1669 (Rettung), 1155 (Touristenpolizei)',plug:'A/B/C/O',lang:'th',tip:'Kleingeld da lassen, 20–50 Baht.',drive:'links'},
-  JP:{n:'Japan',cur:'JPY',em:'110 (Polizei), 119 (Rettung)',plug:'A/B (100 V)',lang:'ja',tip:'Kein Trinkgeld, gilt eher als unhöflich.',drive:'links'},
-  CN:{n:'China',cur:'CNY',em:'110 (Polizei), 120 (Rettung)',plug:'A/C/I',lang:'zh',tip:'Nicht üblich.',drive:'rechts'},
-  KR:{n:'Südkorea',cur:'KRW',em:'112 (Polizei), 119 (Rettung)',plug:'C/F',lang:'ko',tip:'Nicht üblich.',drive:'rechts'},
-  SG:{n:'Singapur',cur:'SGD',em:'999 (Polizei), 995 (Rettung)',plug:'G',lang:'en',tip:'Service-Charge meist inklusive.',drive:'links'},
-  ID:{n:'Indonesien',cur:'IDR',em:'112',plug:'C/F',lang:'id',tip:'5–10 %, oft Service inklusive.',drive:'links'},
-  VN:{n:'Vietnam',cur:'VND',em:'113 (Polizei), 115 (Rettung)',plug:'A/C',lang:'vi',tip:'Kleines Trinkgeld willkommen.',drive:'rechts'},
-  IN:{n:'Indien',cur:'INR',em:'112',plug:'C/D/M',lang:'en',tip:'ca. 10 %.',drive:'links'},
-  AU:{n:'Australien',cur:'AUD',em:'000 (Handy auch 112)',plug:'I',lang:'en',tip:'Nicht erwartet, 10 % bei sehr gutem Service.',drive:'links'},
-  NZ:{n:'Neuseeland',cur:'NZD',em:'111',plug:'I',lang:'en',tip:'Nicht erwartet.',drive:'links'},
-  ZA:{n:'Südafrika',cur:'ZAR',em:'10111 (Polizei), 10177 (Rettung), Handy 112',plug:'M/N',lang:'en',tip:'10–15 %.',drive:'links'},
-  BR:{n:'Brasilien',cur:'BRL',em:'190 (Polizei), 192 (Rettung)',plug:'N (C passt oft)',lang:'pt',tip:'10 % meist schon auf der Rechnung.',drive:'rechts'}
+  GB:{n:'Großbritannien',cur:'GBP',em:'999 oder 112',plug:'G',tip:'10–12,5 % im Restaurant, oft schon als „service charge“ auf der Rechnung. Im Pub kein Trinkgeld am Tresen.',drive:'links'},
+  IE:{n:'Irland',cur:'EUR',em:'112 oder 999',plug:'G',tip:'10–15 % im Restaurant, Pub kein Muss.',drive:'links'},
+  FR:{n:'Frankreich',cur:'EUR',em:'112',plug:'C/E',tip:'Service ist inklusive, Aufrunden oder 5 % bei gutem Service.',drive:'rechts'},
+  ES:{n:'Spanien',cur:'EUR',em:'112',plug:'C/F',tip:'5–10 % oder aufrunden.',drive:'rechts'},
+  PT:{n:'Portugal',cur:'EUR',em:'112',plug:'C/F',tip:'5–10 % oder aufrunden.',drive:'rechts'},
+  IT:{n:'Italien',cur:'EUR',em:'112',plug:'C/F/L',tip:'„Coperto“ steht oft auf der Rechnung, Trinkgeld optional (aufrunden).',drive:'rechts'},
+  NL:{n:'Niederlande',cur:'EUR',em:'112',plug:'C/F',tip:'5–10 % oder aufrunden. Viele Läden nur Karte.',drive:'rechts'},
+  BE:{n:'Belgien',cur:'EUR',em:'112',plug:'C/E',tip:'Service inklusive, aufrunden ist nett.',drive:'rechts'},
+  LU:{n:'Luxemburg',cur:'EUR',em:'112',plug:'C/F',tip:'5–10 %.',drive:'rechts'},
+  AT:{n:'Österreich',cur:'EUR',em:'112',plug:'C/F',tip:'5–10 %, beim Bezahlen direkt sagen.',drive:'rechts'},
+  CH:{n:'Schweiz',cur:'CHF',em:'112 (Polizei 117, Rettung 144)',plug:'J (C passt)',tip:'Service inklusive, aufrunden.',drive:'rechts'},
+  DE:{n:'Deutschland',cur:'EUR',em:'112 (Polizei 110)',plug:'C/F',tip:'5–10 %.',drive:'rechts'},
+  DK:{n:'Dänemark',cur:'DKK',em:'112',plug:'K (C passt)',tip:'Service inklusive, Trinkgeld optional.',drive:'rechts'},
+  SE:{n:'Schweden',cur:'SEK',em:'112',plug:'C/F',tip:'Optional, 5–10 %. Fast überall nur Karte.',drive:'rechts'},
+  NO:{n:'Norwegen',cur:'NOK',em:'112 (Polizei), 113 (Rettung)',plug:'C/F',tip:'Optional, aufrunden.',drive:'rechts'},
+  FI:{n:'Finnland',cur:'EUR',em:'112',plug:'C/F',tip:'Nicht erwartet.',drive:'rechts'},
+  IS:{n:'Island',cur:'ISK',em:'112',plug:'C/F',tip:'Nicht erwartet.',drive:'rechts'},
+  PL:{n:'Polen',cur:'PLN',em:'112',plug:'C/E',tip:'ca. 10 %.',drive:'rechts'},
+  CZ:{n:'Tschechien',cur:'CZK',em:'112',plug:'C/E',tip:'ca. 10 %, beim Bezahlen sagen.',drive:'rechts'},
+  HU:{n:'Ungarn',cur:'HUF',em:'112',plug:'C/F',tip:'10–15 %, Service-Aufschlag prüfen.',drive:'rechts'},
+  HR:{n:'Kroatien',cur:'EUR',em:'112',plug:'C/F',tip:'ca. 10 %.',drive:'rechts'},
+  SI:{n:'Slowenien',cur:'EUR',em:'112',plug:'C/F',tip:'5–10 %.',drive:'rechts'},
+  SK:{n:'Slowakei',cur:'EUR',em:'112',plug:'C/E',tip:'5–10 %.',drive:'rechts'},
+  GR:{n:'Griechenland',cur:'EUR',em:'112',plug:'C/F',tip:'5–10 % oder aufrunden.',drive:'rechts'},
+  CY:{n:'Zypern',cur:'EUR',em:'112',plug:'G',tip:'ca. 10 %.',drive:'links'},
+  MT:{n:'Malta',cur:'EUR',em:'112',plug:'G',tip:'5–10 %.',drive:'links'},
+  RO:{n:'Rumänien',cur:'RON',em:'112',plug:'C/F',tip:'ca. 10 %.',drive:'rechts'},
+  BG:{n:'Bulgarien',cur:'EUR',em:'112',plug:'C/F',tip:'ca. 10 %.',drive:'rechts'},
+  EE:{n:'Estland',cur:'EUR',em:'112',plug:'C/F',tip:'Optional, 5–10 %.',drive:'rechts'},
+  LV:{n:'Lettland',cur:'EUR',em:'112',plug:'C/F',tip:'Optional, 5–10 %.',drive:'rechts'},
+  LT:{n:'Litauen',cur:'EUR',em:'112',plug:'C/F',tip:'Optional, 5–10 %.',drive:'rechts'},
+  TR:{n:'Türkei',cur:'TRY',em:'112',plug:'C/F',tip:'5–10 %.',drive:'rechts'},
+  US:{n:'USA',cur:'USD',em:'911',plug:'A/B (110 V)',tip:'18–20 % im Restaurant sind Pflicht-Kultur, 1–2 $ pro Drink.',drive:'rechts'},
+  CA:{n:'Kanada',cur:'CAD',em:'911',plug:'A/B (110 V)',tip:'15–20 %.',drive:'rechts'},
+  MX:{n:'Mexiko',cur:'MXN',em:'911',plug:'A/B (127 V)',tip:'10–15 %.',drive:'rechts'},
+  AE:{n:'Vereinigte Arabische Emirate',cur:'AED',em:'999 (Polizei), 998 (Rettung)',plug:'G',tip:'10–15 %, Service-Charge prüfen.',drive:'rechts'},
+  EG:{n:'Ägypten',cur:'EGP',em:'122 (Polizei), 123 (Rettung)',plug:'C/F',tip:'10–15 %, kleines Bakschisch üblich.',drive:'rechts'},
+  MA:{n:'Marokko',cur:'MAD',em:'19 (Polizei), 15 (Rettung)',plug:'C/E',tip:'ca. 10 %.',drive:'rechts'},
+  TN:{n:'Tunesien',cur:'TND',em:'197 (Polizei), 190 (Rettung)',plug:'C/E',tip:'ca. 10 %.',drive:'rechts'},
+  TH:{n:'Thailand',cur:'THB',em:'191 (Polizei), 1669 (Rettung), 1155 (Touristenpolizei)',plug:'A/B/C/O',tip:'Kleingeld da lassen, 20–50 Baht.',drive:'links'},
+  JP:{n:'Japan',cur:'JPY',em:'110 (Polizei), 119 (Rettung)',plug:'A/B (100 V)',tip:'Kein Trinkgeld, gilt eher als unhöflich.',drive:'links'},
+  CN:{n:'China',cur:'CNY',em:'110 (Polizei), 120 (Rettung)',plug:'A/C/I',tip:'Nicht üblich.',drive:'rechts'},
+  KR:{n:'Südkorea',cur:'KRW',em:'112 (Polizei), 119 (Rettung)',plug:'C/F',tip:'Nicht üblich.',drive:'rechts'},
+  SG:{n:'Singapur',cur:'SGD',em:'999 (Polizei), 995 (Rettung)',plug:'G',tip:'Service-Charge meist inklusive.',drive:'links'},
+  ID:{n:'Indonesien',cur:'IDR',em:'112',plug:'C/F',tip:'5–10 %, oft Service inklusive.',drive:'links'},
+  VN:{n:'Vietnam',cur:'VND',em:'113 (Polizei), 115 (Rettung)',plug:'A/C',tip:'Kleines Trinkgeld willkommen.',drive:'rechts'},
+  IN:{n:'Indien',cur:'INR',em:'112',plug:'C/D/M',tip:'ca. 10 %.',drive:'links'},
+  AU:{n:'Australien',cur:'AUD',em:'000 (Handy auch 112)',plug:'I',tip:'Nicht erwartet, 10 % bei sehr gutem Service.',drive:'links'},
+  NZ:{n:'Neuseeland',cur:'NZD',em:'111',plug:'I',tip:'Nicht erwartet.',drive:'links'},
+  ZA:{n:'Südafrika',cur:'ZAR',em:'10111 (Polizei), 10177 (Rettung), Handy 112',plug:'M/N',tip:'10–15 %.',drive:'links'},
+  BR:{n:'Brasilien',cur:'BRL',em:'190 (Polizei), 192 (Rettung)',plug:'N (C passt oft)',tip:'10 % meist schon auf der Rechnung.',drive:'rechts'}
 };
 const PLUG_OK = p => /\b[CEF]\b/.test(p) || /C passt/.test(p);
 
-const PHRASES = {
-  en:['Hello','Thank you','Please','Excuse me / Sorry','Do you speak English?','The bill, please','How much is it?','Where is …?','Help!'],
-  fr:['Bonjour','Merci','S’il vous plaît','Excusez-moi','Vous parlez anglais ?','L’addition, s’il vous plaît','Combien ça coûte ?','Où est … ?','Au secours !'],
-  es:['Hola','Gracias','Por favor','Perdón','¿Habla inglés?','La cuenta, por favor','¿Cuánto cuesta?','¿Dónde está …?','¡Socorro!'],
-  it:['Ciao / Buongiorno','Grazie','Per favore','Scusi','Parla inglese?','Il conto, per favore','Quanto costa?','Dov’è …?','Aiuto!'],
-  pt:['Olá','Obrigado / Obrigada','Por favor','Desculpe','Fala inglês?','A conta, por favor','Quanto custa?','Onde fica …?','Socorro!'],
-  nl:['Hallo','Dank u wel','Alstublieft','Sorry','Spreekt u Engels?','De rekening, alstublieft','Hoeveel kost het?','Waar is …?','Help!'],
-  pl:['Dzień dobry','Dziękuję','Proszę','Przepraszam','Czy mówi pan/pani po angielsku?','Poproszę rachunek','Ile to kosztuje?','Gdzie jest …?','Pomocy!'],
-  cs:['Dobrý den','Děkuji','Prosím','Promiňte','Mluvíte anglicky?','Zaplatím, prosím','Kolik to stojí?','Kde je …?','Pomoc!'],
-  hr:['Bok / Dobar dan','Hvala','Molim','Oprostite','Govorite li engleski?','Račun, molim','Koliko košta?','Gdje je …?','Upomoć!'],
-  tr:['Merhaba','Teşekkürler','Lütfen','Pardon','İngilizce biliyor musunuz?','Hesap lütfen','Ne kadar?','… nerede?','İmdat!'],
-  el:['Γεια σας (Jassas)','Ευχαριστώ (Efcharistó)','Παρακαλώ (Parakaló)','Συγγνώμη (Signómi)','Μιλάτε αγγλικά; (Miláte angliká?)','Τον λογαριασμό, παρακαλώ (Ton logariasmó, parakaló)','Πόσο κάνει; (Póso káni?)','Πού είναι …; (Pu íne …?)','Βοήθεια! (Voíthia!)'],
-  ja:['こんにちは (Konnichiwa)','ありがとう (Arigatō)','お願いします (Onegaishimasu)','すみません (Sumimasen)','英語を話せますか？ (Eigo o hanasemasu ka?)','お会計お願いします (Okaikei onegaishimasu)','いくらですか？ (Ikura desu ka?)','…はどこですか？ (… wa doko desu ka?)','助けて！ (Tasukete!)']
+/* ---------- Sprachen ----------
+   Jede Sprache: n = deutscher Name, nat = Eigenname, tag = Stimme fürs Vorlesen,
+   ph = 15 Sätze in der Reihenfolge von PH_DE („Text|Aussprache“ bei fremder Schrift),
+   note = Hinweis, de = abweichende deutsche Bedeutung, pairs = regionale Wörter. */
+const PH_DE = ['Hallo','Tschüss','Ja / Nein','Bitte','Danke','Entschuldigung','Sprechen Sie Englisch?','Ich verstehe nicht.','Die Rechnung, bitte.','Wie viel kostet das?','Ein Wasser, bitte.','Wo ist …?','Wo ist die Toilette?','Hilfe!','Ich brauche einen Arzt.'];
+const PH_GROUPS = [['Grundlagen',0,6],['Verständigung',6,8],['Essen & Einkaufen',8,11],['Unterwegs',11,13],['Notfall',13,15]];
+const LANGS = {
+  de:{n:'Deutsch',nat:'Deutsch',tag:'de-DE',home:true},
+  de_at:{n:'Österreichisch',nat:'Österreichisches Deutsch',tag:'de-AT',note:'Hochdeutsch versteht jeder. Mit diesen Wörtern klingst du aber gleich wie ein Einheimischer.',
+    pairs:[['Hallo','Grüß Gott / Servus'],['Tschüss','Pfiat di / Baba / Servus'],['Die Rechnung, bitte.','Zahlen, bitte!'],['Brötchen','Semmel'],['Kartoffeln','Erdäpfel'],['Tomaten','Paradeiser'],['Sahne','Schlagobers'],['Aprikose','Marille'],['Pfannkuchen','Palatschinken'],['Milchkaffee','Melange'],['Plastiktüte','Sackerl'],['Treppe','Stiege'],['Januar','Jänner']]},
+  de_ch:{n:'Schweizerdeutsch',nat:'Schwiizerdütsch',tag:'de-CH',note:'Hochdeutsch versteht jeder, Schweizer antworten dir dann meist auch auf Hochdeutsch.',
+    pairs:[['Hallo','Grüezi (formell) / Hoi (locker)'],['Tschüss','Uf Widerluege / Ade / Tschüss'],['Danke','Merci / Merci vielmal'],['Entschuldigung','Exgüsi'],['Die Rechnung, bitte.','Zahle, bitte!'],['Guten Appetit','En Guete!'],['Prost','Proscht! / Zum Wohl!'],['Brötchen','Weggli / Brötli'],['Kartoffeln','Härdöpfel'],['Sahne','Rahm'],['Fahrrad','Velo'],['Bürgersteig','Trottoir'],['parken','parkieren']]},
+  en:{n:'Englisch',nat:'English',tag:'en-GB',de:{6:'Können Sie bitte langsamer sprechen?'},
+    ph:['Hello','Goodbye','Yes / No','Please','Thank you','Excuse me / Sorry','Could you speak more slowly, please?','Sorry, I don’t understand.','Could I have the bill, please?','How much is this?','A glass of water, please.','Where is …?','Where are the toilets?','Help!','I need a doctor.']},
+  en_us:{n:'Englisch (USA)',nat:'English (US)',tag:'en-US',de:{6:'Können Sie bitte langsamer sprechen?'},
+    ph:['Hi / Hello','Bye / Goodbye','Yes / No','Please','Thank you','Excuse me / Sorry','Could you speak more slowly, please?','Sorry, I don’t understand.','Could I get the check, please?','How much is this?','A glass of water, please.','Where is …?','Where is the restroom?','Help!','I need a doctor.']},
+  fr:{n:'Französisch',nat:'Français',tag:'fr-FR',note:'Immer erst „Bonjour“ sagen, bevor du etwas fragst. Das gilt als höflich und öffnet Türen.',
+    ph:['Bonjour','Au revoir','Oui / Non','S’il vous plaît','Merci','Excusez-moi / Pardon','Vous parlez anglais ?','Je ne comprends pas.','L’addition, s’il vous plaît.','Combien ça coûte ?','Une carafe d’eau, s’il vous plaît.','Où est … ?','Où sont les toilettes ?','Au secours !','J’ai besoin d’un médecin.']},
+  es:{n:'Spanisch',nat:'Español',tag:'es-ES',
+    ph:['Hola','Adiós / Hasta luego','Sí / No','Por favor','Gracias','Perdón / Disculpe','¿Habla inglés?','No entiendo.','La cuenta, por favor.','¿Cuánto cuesta?','Un vaso de agua, por favor.','¿Dónde está …?','¿Dónde está el baño?','¡Socorro! / ¡Ayuda!','Necesito un médico.']},
+  ca:{n:'Katalanisch',nat:'Català',tag:'ca-ES',note:'Spanisch versteht hier jeder. Ein paar Worte Katalanisch kommen aber sehr gut an.',
+    ph:['Hola / Bon dia','Adéu','Sí / No','Si us plau','Gràcies','Perdoni','Parla anglès?','No ho entenc.','El compte, si us plau.','Quant costa?','Un got d’aigua, si us plau.','On és …?','On és el lavabo?','Ajuda!','Necessito un metge.']},
+  it:{n:'Italienisch',nat:'Italiano',tag:'it-IT',
+    ph:['Buongiorno / Ciao','Arrivederci','Sì / No','Per favore','Grazie','Mi scusi','Parla inglese?','Non capisco.','Il conto, per favore.','Quanto costa?','Un bicchiere d’acqua, per favore.','Dov’è …?','Dov’è il bagno?','Aiuto!','Ho bisogno di un medico.']},
+  pt:{n:'Portugiesisch',nat:'Português',tag:'pt-PT',note:'„Obrigado“ sagen Männer, „Obrigada“ Frauen.',
+    ph:['Olá / Bom dia','Adeus / Até logo','Sim / Não','Por favor','Obrigado / Obrigada','Desculpe','Fala inglês?','Não percebo.','A conta, por favor.','Quanto custa?','Um copo de água, por favor.','Onde é …?','Onde é a casa de banho?','Socorro!','Preciso de um médico.']},
+  ptbr:{n:'Portugiesisch (Brasilien)',nat:'Português do Brasil',tag:'pt-BR',note:'„Obrigado“ sagen Männer, „Obrigada“ Frauen.',
+    ph:['Oi / Olá','Tchau','Sim / Não','Por favor','Obrigado / Obrigada','Desculpa / Com licença','Você fala inglês?','Não entendo.','A conta, por favor.','Quanto custa?','Um copo de água, por favor.','Onde fica …?','Onde fica o banheiro?','Socorro!','Preciso de um médico.']},
+  nl:{n:'Niederländisch',nat:'Nederlands',tag:'nl-NL',
+    ph:['Hallo / Goedendag','Dag / Tot ziens','Ja / Nee','Alstublieft','Dank u wel','Sorry / Pardon','Spreekt u Engels?','Ik begrijp het niet.','De rekening, alstublieft.','Hoeveel kost het?','Een glas water, alstublieft.','Waar is …?','Waar is het toilet?','Help!','Ik heb een dokter nodig.']},
+  da:{n:'Dänisch',nat:'Dansk',tag:'da-DK',note:'Ein echtes „bitte“ benutzt man selten. Meist hängt man einfach „tak“ an, z. B. „En kaffe, tak“.',
+    ph:['Hej / Goddag','Farvel / Hej hej','Ja / Nej','Vær så venlig','Tak','Undskyld','Taler du engelsk?','Jeg forstår det ikke.','Må jeg bede om regningen?','Hvad koster det?','Et glas vand, tak.','Hvor er …?','Hvor er toilettet?','Hjælp!','Jeg har brug for en læge.']},
+  sv:{n:'Schwedisch',nat:'Svenska',tag:'sv-SE',note:'„Tack“ heißt danke und wird auch als „bitte“ benutzt, z. B. „En kaffe, tack“.',
+    ph:['Hej','Hej då','Ja / Nej','Tack','Tack','Ursäkta','Pratar du engelska?','Jag förstår inte.','Kan jag få notan, tack?','Vad kostar det?','Ett glas vatten, tack.','Var är …?','Var är toaletten?','Hjälp!','Jag behöver en läkare.']},
+  no:{n:'Norwegisch',nat:'Norsk',tag:'nb-NO',note:'Meist hängt man statt „bitte“ einfach „takk“ an, z. B. „En kaffe, takk“.',
+    ph:['Hei','Ha det','Ja / Nei','Vær så snill','Takk','Unnskyld','Snakker du engelsk?','Jeg forstår ikke.','Kan jeg få regningen?','Hva koster det?','Et glass vann, takk.','Hvor er …?','Hvor er toalettet?','Hjelp!','Jeg trenger en lege.']},
+  fi:{n:'Finnisch',nat:'Suomi',tag:'fi-FI',note:'Ein eigenes Wort für „bitte“ gibt es kaum, man sagt einfach „kiitos“.',
+    ph:['Hei / Moi','Näkemiin / Moi moi','Kyllä / Ei','Kiitos','Kiitos','Anteeksi','Puhutteko englantia?','En ymmärrä.','Saisinko laskun?','Paljonko se maksaa?','Lasi vettä, kiitos.','Missä on …?','Missä on vessa?','Apua!','Tarvitsen lääkäriä.']},
+  is:{n:'Isländisch',nat:'Íslenska',tag:'is-IS',note:'Fast alle Isländer sprechen sehr gut Englisch.',
+    ph:['Halló / Góðan daginn','Bless','Já / Nei','Vinsamlegast','Takk fyrir','Afsakið','Talar þú ensku?','Ég skil ekki.','Get ég fengið reikninginn?','Hvað kostar þetta?','Vatnsglas, takk.','Hvar er …?','Hvar er klósettið?','Hjálp!','Ég þarf lækni.']},
+  pl:{n:'Polnisch',nat:'Polski',tag:'pl-PL',note:'„pan“ sagt man zu einem Mann, „pani“ zu einer Frau.',
+    ph:['Dzień dobry / Cześć','Do widzenia / Cześć','Tak / Nie','Proszę','Dziękuję','Przepraszam','Czy mówi pan/pani po angielsku?','Nie rozumiem.','Poproszę rachunek.','Ile to kosztuje?','Poproszę szklankę wody.','Gdzie jest …?','Gdzie jest toaleta?','Pomocy!','Potrzebuję lekarza.']},
+  cs:{n:'Tschechisch',nat:'Čeština',tag:'cs-CZ',
+    ph:['Dobrý den / Ahoj','Na shledanou / Ahoj','Ano / Ne','Prosím','Děkuji','Promiňte','Mluvíte anglicky?','Nerozumím.','Zaplatím, prosím.','Kolik to stojí?','Sklenici vody, prosím.','Kde je …?','Kde je toaleta?','Pomoc!','Potřebuji lékaře.']},
+  sk:{n:'Slowakisch',nat:'Slovenčina',tag:'sk-SK',
+    ph:['Dobrý deň / Ahoj','Dovidenia / Ahoj','Áno / Nie','Prosím','Ďakujem','Prepáčte','Hovoríte po anglicky?','Nerozumiem.','Zaplatím, prosím.','Koľko to stojí?','Pohár vody, prosím.','Kde je …?','Kde je toaleta?','Pomoc!','Potrebujem lekára.']},
+  hu:{n:'Ungarisch',nat:'Magyar',tag:'hu-HU',
+    ph:['Jó napot / Szia','Viszontlátásra / Szia','Igen / Nem','Kérem','Köszönöm','Elnézést','Beszél angolul?','Nem értem.','A számlát kérem.','Mennyibe kerül?','Egy pohár vizet kérek.','Hol van …?','Hol van a mosdó?','Segítség!','Orvosra van szükségem.']},
+  hr:{n:'Kroatisch',nat:'Hrvatski',tag:'hr-HR',
+    ph:['Dobar dan / Bok','Doviđenja / Bok','Da / Ne','Molim','Hvala','Oprostite','Govorite li engleski?','Ne razumijem.','Račun, molim.','Koliko košta?','Čašu vode, molim.','Gdje je …?','Gdje je WC?','Upomoć!','Trebam liječnika.']},
+  bs:{n:'Bosnisch',nat:'Bosanski',tag:'bs-BA',note:'Bosnisch, Kroatisch und Serbisch sind sich sehr ähnlich, man versteht sich gegenseitig.',
+    ph:['Dobar dan / Zdravo','Doviđenja / Ćao','Da / Ne','Molim','Hvala','Izvinite','Govorite li engleski?','Ne razumijem.','Račun, molim.','Koliko košta?','Čašu vode, molim.','Gdje je …?','Gdje je WC?','Upomoć!','Trebam doktora.']},
+  sr:{n:'Serbisch',nat:'Српски / Srpski',tag:'sr-RS',note:'Serbisch wird in kyrillischer und lateinischer Schrift geschrieben, beides ist überall üblich.',
+    ph:['Добар дан|Dobar dan','Довиђења|Doviđenja','Да / Не|Da / Ne','Молим|Molim','Хвала|Hvala','Извините|Izvinite','Да ли говорите енглески?|Da li govorite engleski?','Не разумем.|Ne razumem.','Рачун, молим.|Račun, molim.','Колико кошта?|Koliko košta?','Чашу воде, молим.|Čašu vode, molim.','Где је …?|Gde je …?','Где је тоалет?|Gde je toalet?','Упомоћ!|Upomoć!','Треба ми лекар.|Treba mi lekar.']},
+  mk:{n:'Mazedonisch',nat:'Македонски',tag:'mk-MK',
+    ph:['Здраво|Sdrawo','Довидување|Dowiduwanje','Да / Не|Da / Ne','Ве молам|We molam','Благодарам|Blagodaram','Извинете|Iswinete','Зборувате ли англиски?|Sboruwate li angliski?','Не разбирам.|Ne rasbiram.','Сметката, ве молам.|Smetkata, we molam.','Колку чини?|Kolku tschini?','Чаша вода, ве молам.|Tschascha woda, we molam.','Каде е …?|Kade e …?','Каде е тоалетот?|Kade e toaletot?','Помош!|Pomosch!','Ми треба лекар.|Mi treba lekar.']},
+  sq:{n:'Albanisch',nat:'Shqip',tag:'sq-AL',note:'Vorsicht: Kopfnicken kann „nein“ und Kopfschütteln „ja“ bedeuten.',
+    ph:['Përshëndetje / Mirëdita','Mirupafshim','Po / Jo','Ju lutem','Faleminderit','Më falni','A flisni anglisht?','Nuk kuptoj.','Llogarinë, ju lutem.','Sa kushton?','Një gotë ujë, ju lutem.','Ku është …?','Ku është tualeti?','Ndihmë!','Kam nevojë për një mjek.']},
+  sl:{n:'Slowenisch',nat:'Slovenščina',tag:'sl-SI',
+    ph:['Dober dan / Živjo','Nasvidenje / Adijo','Da / Ne','Prosim','Hvala','Oprostite','Ali govorite angleško?','Ne razumem.','Račun, prosim.','Koliko stane?','Kozarec vode, prosim.','Kje je …?','Kje je stranišče?','Na pomoč!','Potrebujem zdravnika.']},
+  ro:{n:'Rumänisch',nat:'Română',tag:'ro-RO',
+    ph:['Bună ziua / Salut','La revedere','Da / Nu','Vă rog','Mulțumesc','Scuzați-mă','Vorbiți engleză?','Nu înțeleg.','Nota, vă rog.','Cât costă?','Un pahar cu apă, vă rog.','Unde este …?','Unde este toaleta?','Ajutor!','Am nevoie de un doctor.']},
+  bg:{n:'Bulgarisch',nat:'Български',tag:'bg-BG',note:'Vorsicht: Kopfnicken heißt oft „nein“, Kopfschütteln „ja“.',
+    ph:['Здравейте|Sdrawejte','Довиждане|Dowischdane','Да / Не|Da / Ne','Моля|Molja','Благодаря|Blagodarja','Извинете|Iswinete','Говорите ли английски?|Goworite li anglijski?','Не разбирам.|Ne rasbiram.','Сметката, моля.|Smetkata, molja.','Колко струва?|Kolko struwa?','Чаша вода, моля.|Tschascha woda, molja.','Къде е …?|Kade e …?','Къде е тоалетната?|Kade e toaletnata?','Помощ!|Pomoscht!','Трябва ми лекар.|Trjabwa mi lekar.']},
+  el:{n:'Griechisch',nat:'Ελληνικά',tag:'el-GR',note:'Achtung: „Ne“ heißt auf Griechisch „ja“.',
+    ph:['Γεια σας|Jassas','Αντίο|Adío','Ναι / Όχι|Ne / Ochi','Παρακαλώ|Parakaló','Ευχαριστώ|Efcharistó','Συγγνώμη|Signómi','Μιλάτε αγγλικά;|Miláte angliká?','Δεν καταλαβαίνω.|Den katalawéno.','Τον λογαριασμό, παρακαλώ.|Ton logariasmó, parakaló.','Πόσο κάνει;|Póso káni?','Ένα ποτήρι νερό, παρακαλώ.|Éna potíri neró, parakaló.','Πού είναι …;|Pu íne …?','Πού είναι η τουαλέτα;|Pu íne i tualéta?','Βοήθεια!|Woíthia!','Χρειάζομαι γιατρό.|Chriásome jatró.']},
+  et:{n:'Estnisch',nat:'Eesti',tag:'et-EE',
+    ph:['Tere','Head aega / Nägemist','Jah / Ei','Palun','Aitäh','Vabandust','Kas te räägite inglise keelt?','Ma ei saa aru.','Arve, palun.','Kui palju see maksab?','Klaas vett, palun.','Kus on …?','Kus on tualett?','Appi!','Mul on vaja arsti.']},
+  lv:{n:'Lettisch',nat:'Latviešu',tag:'lv-LV',
+    ph:['Labdien / Sveiki','Uz redzēšanos / Atā','Jā / Nē','Lūdzu','Paldies','Atvainojiet','Vai jūs runājat angliski?','Es nesaprotu.','Rēķinu, lūdzu.','Cik tas maksā?','Glāzi ūdens, lūdzu.','Kur ir …?','Kur ir tualete?','Palīgā!','Man vajag ārstu.']},
+  lt:{n:'Litauisch',nat:'Lietuvių',tag:'lt-LT',
+    ph:['Laba diena / Labas','Viso gero / Iki','Taip / Ne','Prašau','Ačiū','Atsiprašau','Ar kalbate angliškai?','Nesuprantu.','Sąskaitą, prašau.','Kiek tai kainuoja?','Stiklinę vandens, prašau.','Kur yra …?','Kur yra tualetas?','Padėkite!','Man reikia gydytojo.']},
+  tr:{n:'Türkisch',nat:'Türkçe',tag:'tr-TR',note:'„Hoşça kalın“ sagt, wer geht. „Güle güle“ sagt, wer bleibt.',
+    ph:['Merhaba','Hoşça kalın / Güle güle','Evet / Hayır','Lütfen','Teşekkür ederim','Affedersiniz','İngilizce biliyor musunuz?','Anlamıyorum.','Hesap, lütfen.','Bu ne kadar?','Bir bardak su, lütfen.','… nerede?','Tuvalet nerede?','İmdat!','Doktora ihtiyacım var.']},
+  ru:{n:'Russisch',nat:'Русский',tag:'ru-RU',
+    ph:['Здравствуйте|Sdrastwujtje','До свидания|Do swidanja','Да / Нет|Da / Njet','Пожалуйста|Paschalusta','Спасибо|Spassiba','Извините|Iswinitje','Вы говорите по-английски?|Wy gawaritje pa-anglijski?','Я не понимаю.|Ja nje panimaju.','Счёт, пожалуйста.|Schtschot, paschalusta.','Сколько это стоит?|Skolka eta stoit?','Стакан воды, пожалуйста.|Stakan wody, paschalusta.','Где …?|Gdje …?','Где туалет?|Gdje tualjet?','Помогите!|Pamagitje!','Мне нужен врач.|Mnje nuschen wratsch.']},
+  uk:{n:'Ukrainisch',nat:'Українська',tag:'uk-UA',
+    ph:['Добрий день|Dobryj den','До побачення|Do pobatschennja','Так / Ні|Tak / Ni','Будь ласка|Bud laska','Дякую|Djakuju','Вибачте|Wybatschte','Ви говорите англійською?|Wy howoryte anhlijskoju?','Я не розумію.|Ja ne rosumiju.','Рахунок, будь ласка.|Rachunok, bud laska.','Скільки це коштує?|Skilky ze koschtuje?','Склянку води, будь ласка.|Skljanku wody, bud laska.','Де …?|De …?','Де туалет?|De tualet?','Допоможіть!|Dopomoschit!','Мені потрібен лікар.|Meni potriben likar.']},
+  ka:{n:'Georgisch',nat:'ქართული',tag:'ka-GE',
+    ph:['გამარჯობა|Gamardschoba','ნახვამდის|Nachwamdis','კი / არა|Ki / Ara','თუ შეიძლება|Tu scheidsleba','გმადლობთ|Gmadlobt','ბოდიში|Bodischi','ინგლისური იცით?|Inglisuri izit?','არ მესმის.|Ar mesmis.','ანგარიში, თუ შეიძლება.|Angarischi, tu scheidsleba.','რა ღირს?|Ra ghirs?','წყალი, თუ შეიძლება.|Zqali, tu scheidsleba.','სად არის …?|Sad aris …?','სად არის ტუალეტი?|Sad aris tualeti?','მიშველეთ!|Mischwelet!','ექიმი მჭირდება.|Ekimi mtschirdeba.']},
+  ar:{n:'Arabisch',nat:'العربية',tag:'ar-SA',note:'Hocharabisch versteht man überall. Im Alltag klingen die Dialekte der Länder aber unterschiedlich.',
+    ph:['السلام عليكم / مرحبا|As-salamu alaikum / Marhaba','مع السلامة|Ma’a as-salama','نعم / لا|Na’am / La','من فضلك|Min fadlak','شكرا|Schukran','عفوا|Afwan','هل تتكلم الإنجليزية؟|Hal tatakallam al-inglisija?','لا أفهم|La afham','الحساب من فضلك|Al-hisab min fadlak','بكم هذا؟|Bikam hadha?','ماء من فضلك|Maa’ min fadlak','أين …؟|Aina …?','أين الحمام؟|Aina al-hammam?','النجدة!|An-nadschda!','أحتاج إلى طبيب|Ahtadsch ila tabib']},
+  he:{n:'Hebräisch',nat:'עברית',tag:'he-IL',note:'Hebräisch unterscheidet männliche und weibliche Formen, hier stehen die männlichen. Englisch spricht fast jeder.',
+    ph:['שלום|Schalom','להתראות|Lehitra’ot','כן / לא|Ken / Lo','בבקשה|Bewakascha','תודה|Toda','סליחה|Slicha','אתה מדבר אנגלית?|Ata medaber anglit?','אני לא מבין|Ani lo mewin','חשבון, בבקשה|Cheschbon, bewakascha','כמה זה עולה?|Kama se ole?','מים, בבקשה|Majim, bewakascha','איפה …?|Efo …?','איפה השירותים?|Efo ha-scherutim?','הצילו!|Hazilu!','אני צריך רופא|Ani zarich rofe']},
+  sw:{n:'Swahili',nat:'Kiswahili',tag:'sw-KE',
+    ph:['Jambo / Habari','Kwaheri','Ndiyo / Hapana','Tafadhali','Asante','Samahani','Unazungumza Kiingereza?','Sielewi.','Naomba bili.','Bei gani?','Maji, tafadhali.','… iko wapi?','Choo kiko wapi?','Nisaidie!','Nahitaji daktari.']},
+  hi:{n:'Hindi',nat:'हिन्दी',tag:'hi-IN',
+    ph:['नमस्ते|Namaste','फिर मिलेंगे|Phir milenge','हाँ / नहीं|Haan / Nahin','कृपया|Kripya','धन्यवाद / शुक्रिया|Dhanyavaad / Shukriya','माफ़ कीजिए|Maaf kijiye','क्या आप अंग्रेज़ी बोलते हैं?|Kya aap angrezi bolte hain?','मुझे समझ नहीं आया|Mujhe samajh nahin aaya','बिल दीजिए|Bill dijiye','यह कितने का है?|Yeh kitne ka hai?','पानी दीजिए|Paani dijiye','… कहाँ है?|… kahaan hai?','टॉयलेट कहाँ है?|Toilet kahaan hai?','बचाओ!|Bachao!','मुझे डॉक्टर चाहिए|Mujhe doctor chahiye']},
+  th:{n:'Thai',nat:'ภาษาไทย',tag:'th-TH',note:'Männer hängen „khrap“ an, Frauen „kha“. Das macht jeden Satz höflich.',
+    ph:['สวัสดีครับ/ค่ะ|Sawatdii khrap/kha','ลาก่อน / แล้วเจอกัน|Laa gon / Laeo joe gan','ใช่ / ไม่ใช่|Chai / Mai chai','ขอ … หน่อย|Khor … noi','ขอบคุณครับ/ค่ะ|Khop khun khrap/kha','ขอโทษครับ/ค่ะ|Khor thot khrap/kha','พูดภาษาอังกฤษได้ไหม|Phuut phaasaa angkrit dai mai?','ไม่เข้าใจ|Mai khao jai','เช็คบิลครับ/ค่ะ|Check bin khrap/kha','เท่าไหร่|Thao rai?','ขอน้ำเปล่าหนึ่งแก้ว|Khor naam plao nueng kaeo','… อยู่ที่ไหน|… yuu thii nai?','ห้องน้ำอยู่ที่ไหน|Hong naam yuu thii nai?','ช่วยด้วย|Chuai duai!','ต้องการหมอ|Tong kaan mor']},
+  vi:{n:'Vietnamesisch',nat:'Tiếng Việt',tag:'vi-VN',
+    ph:['Xin chào','Tạm biệt','Vâng / Không','Làm ơn','Cảm ơn','Xin lỗi','Bạn có nói tiếng Anh không?','Tôi không hiểu.','Làm ơn tính tiền.','Cái này bao nhiêu tiền?','Cho tôi một ly nước.','… ở đâu?','Nhà vệ sinh ở đâu?','Cứu tôi với!','Tôi cần bác sĩ.']},
+  id:{n:'Indonesisch',nat:'Bahasa Indonesia',tag:'id-ID',
+    ph:['Halo / Selamat pagi','Sampai jumpa','Ya / Tidak','Tolong','Terima kasih','Maaf / Permisi','Bisa bahasa Inggris?','Saya tidak mengerti.','Minta bon.','Berapa harganya?','Minta air putih.','Di mana …?','Di mana toilet?','Tolong!','Saya perlu dokter.']},
+  ms:{n:'Malaiisch',nat:'Bahasa Melayu',tag:'ms-MY',
+    ph:['Hai / Selamat pagi','Jumpa lagi','Ya / Tidak','Tolong','Terima kasih','Maaf / Tumpang lalu','Boleh cakap bahasa Inggeris?','Saya tak faham.','Minta bil.','Berapa harga ini?','Minta air kosong.','Di mana …?','Di mana tandas?','Tolong!','Saya perlukan doktor.']},
+  tl:{n:'Filipino',nat:'Filipino',tag:'fil-PH',note:'„po“ macht jeden Satz höflich. Englisch ist Amtssprache und wird fast überall verstanden.',
+    ph:['Kumusta / Magandang araw','Paalam / Ingat','Oo / Hindi','Pakiusap','Salamat po','Pasensya na po','Marunong ka bang mag-Ingles?','Hindi ko maintindihan.','Bill po, please.','Magkano po ito?','Tubig po, please.','Nasaan ang …?','Nasaan ang CR?','Tulong!','Kailangan ko ng doktor.']},
+  zh:{n:'Chinesisch',nat:'中文',tag:'zh-CN',
+    ph:['你好|Nǐ hǎo','再见|Zàijiàn','对 / 不对|Duì / Bú duì','请|Qǐng','谢谢|Xièxie','对不起 / 不好意思|Duìbuqǐ / Bù hǎoyìsi','你会说英语吗？|Nǐ huì shuō Yīngyǔ ma?','我听不懂。|Wǒ tīng bù dǒng.','买单！|Mǎidān!','多少钱？|Duōshao qián?','请给我一杯水。|Qǐng gěi wǒ yì bēi shuǐ.','…在哪里？|… zài nǎlǐ?','厕所在哪里？|Cèsuǒ zài nǎlǐ?','救命！|Jiùmìng!','我需要医生。|Wǒ xūyào yīshēng.']},
+  zht:{n:'Chinesisch (traditionell)',nat:'中文（繁體）',tag:'zh-TW',
+    ph:['你好|Nǐ hǎo','再見|Zàijiàn','對 / 不對|Duì / Bú duì','請|Qǐng','謝謝|Xièxie','對不起 / 不好意思|Duìbuqǐ / Bù hǎoyìsi','你會說英文嗎？|Nǐ huì shuō Yīngwén ma?','我聽不懂。|Wǒ tīng bù dǒng.','買單！|Mǎidān!','多少錢？|Duōshǎo qián?','請給我一杯水。|Qǐng gěi wǒ yì bēi shuǐ.','…在哪裡？|… zài nǎlǐ?','廁所在哪裡？|Cèsuǒ zài nǎlǐ?','救命！|Jiùmìng!','我需要醫生。|Wǒ xūyào yīshēng.']},
+  ja:{n:'Japanisch',nat:'日本語',tag:'ja-JP',note:'„Sumimasen“ ist das Zauberwort: Entschuldigung, Bitte und Danke in einem.',
+    ph:['こんにちは|Konnichiwa','さようなら / またね|Sayōnara / Mata ne','はい / いいえ|Hai / Iie','お願いします|Onegaishimasu','ありがとうございます|Arigatō gozaimasu','すみません|Sumimasen','英語を話せますか？|Eigo o hanasemasu ka?','わかりません。|Wakarimasen.','お会計お願いします。|Okaikei onegaishimasu.','いくらですか？|Ikura desu ka?','お水をください。|Omizu o kudasai.','…はどこですか？|… wa doko desu ka?','トイレはどこですか？|Toire wa doko desu ka?','助けて！|Tasukete!','医者が必要です。|Isha ga hitsuyō desu.']},
+  ko:{n:'Koreanisch',nat:'한국어',tag:'ko-KR',note:'„… juseyo“ hinter ein Wort heißt „… bitte“, z. B. „Mul juseyo“ (Wasser, bitte). Achtung: „Ne“ heißt „ja“.',
+    ph:['안녕하세요|Annyeonghaseyo','안녕히 계세요|Annyeonghi gyeseyo','네 / 아니요|Ne / Aniyo','… 주세요|… juseyo','감사합니다|Gamsahamnida','죄송합니다 / 저기요|Joesonghamnida / Jeogiyo','영어 하세요?|Yeongeo haseyo?','이해 못 했어요.|Ihae mot haesseoyo.','계산해 주세요.|Gyesanhae juseyo.','얼마예요?|Eolmayeyo?','물 좀 주세요.|Mul jom juseyo.','… 어디예요?|… eodiyeyo?','화장실 어디예요?|Hwajangsil eodiyeyo?','도와주세요!|Dowajuseyo!','의사가 필요해요.|Uisaga piryohaeyo.']}
 };
-const PHRASE_DE = ['Hallo','Danke','Bitte','Entschuldigung','Sprechen Sie Englisch?','Die Rechnung, bitte','Wie viel kostet das?','Wo ist …?','Hilfe!'];
+/* Land → Sprachen (erste = Standard). „*Name“ = Landessprache ohne eigenes Sprachpaket. */
+const LANG_BY_CC = {
+  DE:'de',AT:'de_at',CH:'de_ch,fr,it',LI:'de',LU:'*Luxemburgisch,fr,de',BE:'nl,fr,de',NL:'nl',FR:'fr',MC:'fr',GB:'en',IE:'en',MT:'en',GI:'en',
+  ES:'es',AD:'ca,es,fr',PT:'pt',IT:'it',SM:'it',VA:'it',DK:'da',SE:'sv',NO:'no',FI:'fi',IS:'is',FO:'*Färöisch,da',GL:'*Grönländisch,da',
+  PL:'pl',CZ:'cs',SK:'sk',HU:'hu',SI:'sl',HR:'hr',BA:'bs',RS:'sr',ME:'sr',MK:'mk',AL:'sq',XK:'sq',GR:'el',CY:'el,tr',
+  RO:'ro',MD:'ro,ru',BG:'bg',EE:'et',LV:'lv',LT:'lt',TR:'tr',UA:'uk',BY:'ru',RU:'ru',GE:'ka',AM:'*Armenisch,ru,en',AZ:'*Aserbaidschanisch,ru,en',
+  US:'en_us,es',CA:'en,fr',MX:'es',GT:'es',BZ:'en,es',HN:'es',SV:'es',NI:'es',CR:'es',PA:'es',CU:'es',DO:'es',PR:'es,en_us',HT:'fr',
+  JM:'en',BS:'en',BB:'en',TT:'en',LC:'en',AG:'en',GD:'en',VC:'en',KN:'en',DM:'en',KY:'en',TC:'en',BM:'en',VG:'en',VI:'en_us',
+  AW:'*Papiamento,nl,es,en',CW:'*Papiamento,nl,es,en',BQ:'nl,en',SX:'nl,en',GP:'fr',MQ:'fr',BL:'fr',MF:'fr',GF:'fr',
+  CO:'es',VE:'es',EC:'es',PE:'es',BO:'es',CL:'es',AR:'es',UY:'es',PY:'es',BR:'ptbr',GY:'en',SR:'nl',
+  MA:'ar,fr',DZ:'ar,fr',TN:'ar,fr',LY:'ar',EG:'ar,en',SD:'ar',MR:'ar,fr',SN:'fr',ML:'fr',BF:'fr',NE:'fr',CI:'fr',GN:'fr',TG:'fr',BJ:'fr',
+  CM:'fr,en',GA:'fr',CG:'fr',CD:'fr',CF:'fr',TD:'fr,ar',DJ:'fr,ar',MG:'fr',KM:'fr,ar',MU:'en,fr',SC:'en,fr',RE:'fr',YT:'fr',
+  CV:'pt',GW:'pt',ST:'pt',AO:'pt',MZ:'pt',GQ:'es',NG:'en',GH:'en',GM:'en',SL:'en',LR:'en',KE:'sw,en',TZ:'sw,en',UG:'en,sw',RW:'en,fr',BI:'fr',
+  ET:'*Amharisch,en',ER:'*Tigrinya,ar,en',SO:'*Somali,ar',ZA:'en',NA:'en',BW:'en',ZW:'en',ZM:'en',MW:'en',LS:'en',SZ:'en',
+  AE:'ar,en',SA:'ar,en',QA:'ar,en',KW:'ar,en',BH:'ar,en',OM:'ar,en',YE:'ar',JO:'ar,en',LB:'ar,fr,en',SY:'ar',IQ:'ar',PS:'ar',IL:'he,en,ar',IR:'*Persisch,en',
+  CN:'zh',HK:'zht,en',MO:'zht,pt',TW:'zht',JP:'ja',KR:'ko',KP:'ko',MN:'*Mongolisch,ru,en',TH:'th',VN:'vi',KH:'*Khmer,en',LA:'*Laotisch,en,fr',MM:'*Birmanisch,en',
+  MY:'ms,en,zh',SG:'en,zh,ms',BN:'ms,en',ID:'id',TL:'pt,id',PH:'tl,en',IN:'hi,en',NP:'*Nepali,hi,en',BT:'*Dzongkha,en',BD:'*Bengalisch,en',LK:'*Singhalesisch,en',
+  MV:'*Dhivehi,en',PK:'*Urdu,en',AF:'*Paschtu und Dari,en',KZ:'*Kasachisch,ru',KG:'*Kirgisisch,ru',UZ:'*Usbekisch,ru',TJ:'*Tadschikisch,ru',TM:'*Turkmenisch,ru',
+  AU:'en',NZ:'en',FJ:'en',PG:'en',WS:'en',TO:'en',VU:'fr,en',NC:'fr',PF:'fr'
+};
+/* Regionen mit anderer Hauptsprache (Ort oder Bundesland/Kanton). Erste Regel gewinnt. */
+const LANG_REGIONS = [
+  ['BE', /ostbelgien|eupen|sankt vith|st\. vith|kelmis|bütgenbach|büllingen/i, 'de,fr,nl'],
+  ['BE', /wallon|brüssel|bruxelles|brussel|brussels|lüttich|liège|namur|charleroi|mons|bergen|dinant|spa\b|durbuy/i, 'fr,nl,de'],
+  ['CH', /genf|genève|geneva|waadt|vaud|lausanne|montreux|vevey|neuenburg|neuchâtel|jura|fribourg|freiburg|sion|sitten|martigny|verbier|crans|delémont/i, 'fr,de_ch,it'],
+  ['CH', /tessin|ticino|lugano|locarno|bellinzona|ascona|mendrisio/i, 'it,de_ch,fr'],
+  ['CA', /québec|quebec|montréal|montreal|gatineau|trois-rivières/i, 'fr,en'],
+  ['ES', /katalonien|cataluña|catalunya|barcelona|girona|tarragona|lleida|balearen|balears|mallorca|palma|menorca|ibiza|eivissa|valencia|alicante/i, 'es,ca'],
+  ['IT', /bozen|bolzano|meran|merano|brixen|bressanone|bruneck|sterzing|gröden|kastelruth|südtirol/i, 'de,it'],
+  ['FR', /elsass|alsace|straßburg|strasbourg|colmar/i, 'fr,de']
+];
+/* Länderspezifische Hinweise */
+const LANG_CC_NOTE = {
+  BE:'Flandern spricht Niederländisch, Wallonien Französisch, Brüssel überwiegend Französisch. Im Osten wird Deutsch gesprochen.',
+  CH:'Je nach Region Deutsch, Französisch oder Italienisch.',
+  LU:'Im Alltag hört man Luxemburgisch. Französisch und Deutsch versteht aber jeder.',
+  CA:'In Québec wird Französisch gesprochen, im Rest Kanadas Englisch.',
+  HK:'In Hongkong spricht man Kantonesisch. Die Schriftzeichen versteht jeder, die Lautschrift hier ist Mandarin. Englisch ist Amtssprache.',
+  MO:'In Macau spricht man Kantonesisch. Die Schriftzeichen versteht jeder, die Lautschrift hier ist Mandarin.',
+  AE:'In Dubai und Abu Dhabi kommst du mit Englisch überall durch.',
+  QA:'Mit Englisch kommst du fast überall durch.',
+  SG:'Englisch ist die Hauptsprache im Alltag.',
+  IN:'Englisch ist zweite Amtssprache. Hindi wird vor allem im Norden gesprochen.',
+  MT:'Neben Englisch wird Maltesisch gesprochen.',
+  IE:'Neben Englisch ist Irisch Amtssprache, im Alltag hörst du fast nur Englisch.',
+  CY:'Im Norden der Insel wird Türkisch gesprochen.',
+  US:'In vielen Regionen wird auch Spanisch gesprochen.',
+  IL:'Englisch versteht fast jeder.',
+  EG:'In Touristenorten wird viel Englisch gesprochen.'
+};
+const SPEECH_CC = {en:{US:'en-US',AU:'en-AU',IE:'en-IE',IN:'en-IN',ZA:'en-ZA',NZ:'en-NZ',CA:'en-CA'},fr:{CA:'fr-CA',BE:'fr-BE',CH:'fr-CH'},nl:{BE:'nl-BE'},it:{CH:'it-CH'},zht:{HK:'zh-HK',MO:'zh-HK'},ar:{EG:'ar-EG',AE:'ar-AE'}};
+function tripLangs(t){
+  const cc = t.dest?.cc || '', where = `${t.dest?.region||''} ${t.dest?.name||''}`;
+  const r = LANG_REGIONS.find(([c, re]) => c === cc && re.test(where));
+  const parts = (r ? r[2] : LANG_BY_CC[cc] || 'en').split(',');
+  const miss = parts[0][0] === '*' ? parts.shift().slice(1) : null;
+  const list = parts.filter(l => LANGS[l]);
+  return {miss, list: list.length ? list : ['en'], cc};
+}
+function langState(t){
+  const s = tripLangs(t);
+  s.cur = t.lang && LANGS[t.lang] ? t.lang : s.list[0];
+  return s;
+}
+function speechTag(l, cc){
+  if (SPEECH_CC[l]?.[cc]) return SPEECH_CC[l][cc];
+  if (l === 'es' && /^(MX|GT|BZ|HN|SV|NI|CR|PA|CU|DO|PR|CO|VE|EC|PE|BO|CL|AR|UY|PY|US)$/.test(cc)) return 'es-MX';
+  return LANGS[l].tag;
+}
+function speak(text, tag){
+  if (!('speechSynthesis' in window)) return;
+  const s = speechSynthesis, vs = s.getVoices(), low = tag.toLowerCase(), base = low.split('-')[0];
+  const norm = v => v.lang.replace('_', '-').toLowerCase();
+  const v = vs.find(x => norm(x) === low) || vs.find(x => norm(x).split('-')[0] === base);
+  if (vs.length && !v) return toast('Für diese Sprache ist auf deinem Gerät keine Stimme installiert.');
+  s.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/\s*\/\s*/g, ', ').replace(/…/g, ''));
+  u.lang = v ? v.lang : tag; if (v) u.voice = v; u.rate = .9;
+  s.speak(u);
+}
+function showPhrase(it, tag, say){
+  const d = document.createElement('div'); d.className = 'show-ov';
+  d.innerHTML = `<div class="de">${esc(it.de)}</div><div class="big ${it.nat.length > 26 ? 'long' : ''}" dir="auto">${esc(it.nat)}</div>${it.hint ? `<div class="hint">${esc(it.hint)}</div>` : ''}${say ? `<button class="btn ghost" data-say style="width:auto;margin-top:28px;padding:12px 22px">${I('vol','sm')}Anhören</button>` : ''}<div class="x">Antippen zum Schließen</div>`;
+  d.onclick = e => { if (e.target.closest('[data-say]')) return speak(it.nat, tag); d.remove(); };
+  document.body.appendChild(d);
+}
+if ('speechSynthesis' in window){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); }
 
 // Grobe Fallback-Kurse (1 EUR = x), falls offline. Werden durch Live-Kurse ersetzt.
 const FX_FALLBACK = {EUR:1,GBP:0.86,USD:1.08,CHF:0.94,DKK:7.46,SEK:11.3,NOK:11.6,PLN:4.3,CZK:25,HUF:395,RON:5,TRY:37,CAD:1.48,MXN:20,AED:4,THB:38,JPY:165,CNY:7.8,KRW:1480,SGD:1.45,AUD:1.65,NZD:1.8,ZAR:20,BRL:6,INR:91,ISK:150,IDR:17500,EGP:52,MAD:10.8,TND:3.3,VND:27500};
@@ -296,6 +486,7 @@ const P = {
   doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
   globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/>',
+  vol:'<path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
   link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
   more:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
   trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M9 7V4h6v3"/>',
@@ -981,7 +1172,7 @@ function viewTools(t){
     ${tile('tip','pct','Trinkgeld', 'Rechner + Landesbrauch')}
     ${tile('docs','doc','Dokumente', `${t.docs.length} gespeichert`)}
     ${tile('land','globe', c ? esc(c.n) : 'Länderinfo', c ? `Notruf ${esc(c.em.match(/\d+/)[0])}` : 'Notruf 112')}
-    ${tile('words','chat','Sprache', PHRASES[c?.lang] ? 'Wichtige Sätze' : 'Englisch')}
+    ${tile('words','chat','Sprache', esc(LANGS[langState(t).cur].n))}
   </div>
   ${sec('Schnellzugriff')}
   <div class="group">
@@ -1080,8 +1271,35 @@ function openTool(t, k){
       : '<div class="card">Für dieses Ziel sind keine Länderdaten hinterlegt. In der EU gilt der Notruf 112.</div>');
   }
   if (k === 'words'){
-    const ph = PHRASES[c?.lang] || PHRASES.en;
-    sheet('Wichtige Sätze', `<div class="group">${PHRASE_DE.map((d,i)=>`<div class="cell"><div class="grow"><div class="sub">${d}</div><b style="font-size:1.05rem">${esc(ph[i])}</b></div></div>`).join('')}</div>${!PHRASES[c?.lang]?'<p class="small muted" style="margin-top:10px">Für diese Sprache gibt es noch keine Sätze, hier auf Englisch.</p>':''}`);
+    const draw = bg => {
+      const {miss, list, cur, cc} = langState(t), L = LANGS[cur], tag = speechTag(cur, cc), land = c?.n || t.dest?.country || '';
+      const say = 'speechSynthesis' in window;
+      const tabs = list.includes(cur) ? list : [...list, cur];
+      const split = s => { const [nat, hint] = s.split('|'); return {nat, hint}; };
+      const groups = L.pairs ? [['Typische Wörter', L.pairs.map(([de, loc]) => ({de, nat:loc}))]]
+        : L.ph ? PH_GROUPS.map(([g, a, b]) => [g, L.ph.slice(a, b).map((s, j) => ({de:(L.de && L.de[a+j]) || PH_DE[a+j], ...split(s)}))]) : [];
+      const items = groups.flatMap(g => g[1]);
+      const notes = [
+        !cc ? 'Kein Land erkannt. Wähle unten die passende Sprache.' : '',
+        miss && !t.lang ? `Landessprache ist ${miss}. Dafür gibt es noch keine Sätze, hier die Sprache, mit der du dort am besten durchkommst.` : '',
+        list.length > 1 || miss ? LANG_CC_NOTE[cc] || '' : '',
+        L.note || ''].filter(Boolean);
+      let n = 0;
+      $('.sb', bg).innerHTML = `
+        ${tabs.length > 1 ? `<div class="chips" style="margin-bottom:14px">${tabs.map(l => `<button class="chip ${l===cur?'on':''}" data-lang="${l}">${esc(LANGS[l].n)}</button>`).join('')}</div>` : ''}
+        <div class="card lang-hd"><div class="grow"><div class="lt" style="font-size:1.5rem">${esc(L.nat)}</div><div class="small muted" style="margin-top:4px">${[L.n !== L.nat ? esc(L.n) : '', esc(land)].filter(Boolean).join(' · ') || 'Sprachführer'}</div></div><div class="ic">${I('chat','sm')}</div></div>
+        ${notes.map(x => `<div class="info" style="margin-top:10px">${esc(x)}</div>`).join('')}
+        ${L.home ? `<div class="card" style="margin-top:12px">${land ? 'In ' + esc(land) : 'Hier'} sprichst du Deutsch, ein Sprachführer ist nicht nötig.</div>` : ''}
+        ${groups.map(([g, arr]) => sec(g) + `<div class="group">${arr.map(it => `<div class="cell ph" data-show="${n++}"><div class="grow"><div class="sub">${esc(it.de)}</div><div class="ph-n" dir="auto">${esc(it.nat)}</div>${it.hint ? `<div class="ph-h">${esc(it.hint)}</div>` : ''}</div>${say ? `<button class="say" data-say="${n-1}" aria-label="Anhören">${I('vol','sm')}</button>` : ''}</div>`).join('')}</div>`).join('')}
+        ${items.length ? `<p class="small muted" style="margin-top:12px;text-align:center">Antippen zeigt den Satz groß zum Vorzeigen${say ? ', der Lautsprecher liest ihn vor' : ''}.</p>` : ''}
+        <div class="field"><label>Andere Sprache</label><select class="inp" id="lang-pick"><option value="">Automatisch: ${esc(LANGS[list[0]].n)}</option>${Object.keys(LANGS).sort((a, b) => LANGS[a].n.localeCompare(LANGS[b].n, 'de')).map(l => `<option value="${l}" ${t.lang===l?'selected':''}>${esc(LANGS[l].n)}</option>`).join('')}</select></div>`;
+      const pick = l => { if (!l || l === list[0]) delete t.lang; else t.lang = l; save(); draw(bg); render(); };
+      bg.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => pick(b.dataset.lang));
+      $('#lang-pick', bg).onchange = e => pick(e.target.value);
+      bg.querySelectorAll('[data-say]').forEach(b => b.onclick = e => { e.stopPropagation(); speak(items[+b.dataset.say].nat, tag); });
+      bg.querySelectorAll('[data-show]').forEach(b => b.onclick = () => showPhrase(items[+b.dataset.show], tag, say));
+    };
+    sheet('Sprache', '', draw);
   }
 }
 function openItemEditor(t, dayDate, itemId){
@@ -1132,7 +1350,7 @@ function openSettings(){
   sheet('Einstellungen', `<div class="group">
     <button class="cell" id="s-exp"><div class="ic">${I('down','sm')}</div><div class="grow">Backup exportieren<div class="sub">Alle Reisen als Datei sichern</div></div></button>
     <label class="cell" style="cursor:pointer"><div class="ic">${I('up','sm')}</div><div class="grow">Backup importieren</div><input type="file" accept="application/json" id="s-imp" class="hide"></label></div>
-    <p class="small muted" style="margin-top:16px;line-height:1.6">Trip Assistant ${APP_VERSION}. Funktioniert ohne Konto und ohne KI. Deine Daten bleiben auf diesem Gerät. Freie Datenquellen: Open-Meteo (Wetter, Orte), OpenStreetMap (Sehenswürdigkeiten), EZB über Frankfurter (Wechselkurse).</p>`,
+    <p class="small muted" style="margin-top:16px;line-height:1.6">Trip Assistant ${APP_VERSION}. Funktioniert ohne Konto und ohne KI. Deine Daten bleiben auf diesem Gerät. Freie Datenquellen: Open-Meteo (Wetter, Orte), OpenStreetMap (Sehenswürdigkeiten), EZB über Frankfurter (Wechselkurse). Vorlesen nutzt die Stimmen deines Geräts.</p>`,
   bg => {
     $('#s-exp', bg).onclick = () => { const b = new Blob([JSON.stringify({v:2, trips}, null, 1)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'trip-assistant-backup.json'; a.click(); };
     $('#s-imp', bg).onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); (j.trips||[]).forEach(x => { if (!getTrip(x.id)) trips.push(migrate(x)); }); save(); bg.remove(); render(); toast('Import fertig'); } catch { toast('Datei konnte nicht gelesen werden'); } };

@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trip Assistant</title>
+<meta name="description" content="Dein persönlicher Reise-Assistent: Eckdaten rein, Plan, Tipps und Tools raus.">
+<meta name="theme-color" content="#0f2a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trip">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f4f1ea; --card:#ffffff; --ink:#14201f; --muted:#5d6b69; --line:#e2ddd2;
+  --accent:#0f6b5c; --accent-ink:#ffffff; --accent-soft:#dcefe9; --warn:#b4541a; --warn-soft:#fbe9dc;
+  --hero:#0f2a2e; --hero-ink:#f4f1ea; --chip:#ece7dc; --ok:#2f7d32;
+  --r:16px; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0c1615; --card:#15211f; --ink:#e9efed; --muted:#9fb0ad; --line:#24332f;
+    --accent:#3fbfa5; --accent-ink:#06201b; --accent-soft:#163a33; --warn:#f0a06a; --warn-soft:#3a2516;
+    --hero:#0a2024; --hero-ink:#e9efed; --chip:#1d2b28; --ok:#6cc070; --shadow:none;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+h1,h2,h3{margin:0;line-height:1.2}
+h2{font-size:1.15rem;margin:22px 0 10px}
+h3{font-size:1rem}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+.hero{background:var(--hero);color:var(--hero-ink);padding:calc(14px + env(safe-area-inset-top)) 0 18px;border-radius:0 0 22px 22px}
+.hero .top{display:flex;align-items:center;gap:10px}
+.hero .top .sp{flex:1}
+.hero h1{font-size:1.45rem;margin-top:8px}
+.hero .sub{opacity:.8;font-size:.92rem;margin-top:2px}
+.iconbtn{background:rgba(255,255,255,.12);border:0;color:inherit;border-radius:12px;padding:8px 12px;font-size:.9rem;cursor:pointer}
+.card{background:var(--card);border-radius:var(--r);padding:14px 16px;margin:12px 0;box-shadow:var(--shadow);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.row{display:flex;gap:10px;align-items:center}
+.row.wrapr{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:11px 16px;background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer;text-decoration:none}
+.btn.sec{background:var(--chip);color:var(--ink)}
+.btn.warn{background:var(--warn-soft);color:var(--warn)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{text-decoration:none;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 12px;font-size:.9rem;cursor:pointer;user-select:none}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+label.f{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px}
+input.t,select.t,textarea.t{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 12px;font-size:16px}
+textarea.t{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:20}
+.tabs button{flex:1;background:none;border:0;padding:6px 2px;font-size:.72rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.tabs button .i{font-size:1.25rem;line-height:1}
+.tabs button.on{color:var(--accent);font-weight:600}
+.day{margin:18px 0 6px;display:flex;align-items:baseline;gap:8px}
+.day h3{font-size:1.02rem}
+.item{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .tm{width:48px;flex:none;font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent);font-size:.92rem;padding-top:1px}
+.item .bd{flex:1;min-width:0}
+.item .ti{font-weight:600}
+.item.done .ti{text-decoration:line-through;opacity:.55}
+.item .ds{font-size:.88rem;color:var(--muted);margin-top:2px}
+.item .acts{display:flex;gap:10px;margin-top:4px;font-size:.85rem;flex-wrap:wrap}
+.item .acts a,.item .acts button{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-size:.85rem;text-decoration:none}
+.item.fixed .tm{color:var(--warn)}
+.tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);margin-left:6px;vertical-align:1px}
+.tag.fix{background:var(--warn-soft);color:var(--warn)}
+.tag.ai{background:var(--accent-soft);color:var(--accent)}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);cursor:pointer}
+.chk:first-child{border-top:0}
+.chk .box{width:22px;height:22px;flex:none;border:2px solid var(--line);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.8rem;margin-top:1px}
+.chk.on .box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chk.on .lbl{text-decoration:line-through;opacity:.55}
+.chk .lbl{flex:1}
+.chk .due{font-size:.78rem;color:var(--warn)}
+.bar{height:6px;border-radius:6px;background:var(--chip);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.93rem}
+.kv b{font-weight:600}
+.wx{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.wx .d{min-width:76px;text-align:center;background:var(--chip);border-radius:12px;padding:8px 6px;font-size:.85rem}
+.wx .d .e{font-size:1.4rem}
+.big{font-size:1.9rem;font-weight:700;font-variant-numeric:tabular-nums}
+.tile{background:var(--accent-soft);border-radius:14px;padding:12px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trip{display:flex;gap:12px;align-items:center;cursor:pointer}
+.trip .em{font-size:1.8rem}
+.empty{text-align:center;padding:34px 10px}
+.empty .em{font-size:3rem}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.sheet .hd{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sheet .hd h2{margin:0;flex:1}
+.msg{padding:10px 12px;border-radius:14px;margin:8px 0;max-width:88%;white-space:pre-wrap;word-wrap:break-word}
+.msg.u{background:var(--accent);color:var(--accent-ink);margin-left:auto;border-bottom-right-radius:4px}
+.msg.a{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;z-index:60;max-width:90%}
+.steps{display:flex;gap:6px;margin:14px 0 4px}
+.steps i{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.2)}
+.steps i.on{background:var(--accent)}
+.list-x{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.list-x:first-child{border-top:0}
+.x{background:none;border:0;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:2px 6px}
+.ph{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.92rem}
+.ph div:nth-child(odd){color:var(--muted)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hide{display:none!important}
+.sug{border:1px solid var(--line);border-radius:12px;margin-top:6px;overflow:hidden;background:var(--card)}
+.sug button{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 12px;cursor:pointer}
+.sug button:first-child{border-top:0}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:.88rem;margin:10px 0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="tabs hide" id="tabs"></nav>
+
+<script>
+'use strict';
+/* =========================================================
+   Trip Assistant – Prototyp v0.1 (16.10.2026)
+   Alles läuft lokal im Browser. Daten: localStorage.
+   Online-Dienste (optional): Open-Meteo (Orte + Wetter),
+   Frankfurter (Wechselkurse), Claude API (eigener Schlüssel).
+   ========================================================= */
+
+const APP_VERSION = '0.1.0';
+const LS_KEY = 'ta.trips.v1';
+const LS_SET = 'ta.settings.v1';
+
+/* ---------- Länderwissen (offline) ---------- */
+// em = Notruf, plug = Steckertyp, tip = Trinkgeld, drive = Fahrseite
+const COUNTRIES = {
+  GB:{n:'Großbritannien',cur:'GBP',em:'999 oder 112',plug:'G',lang:'en',tip:'10–12,5 % im Restaurant, oft schon als „service charge“ auf der Rechnung. Im Pub kein Trinkgeld am Tresen.',drive:'links'},
+  IE:{n:'Irland',cur:'EUR',em:'112 oder 999',plug:'G',lang:'en',tip:'10–15 % im Restaurant, Pub kein Muss.',drive:'links'},
+  FR:{n:'Frankreich',cur:'EUR',em:'112',plug:'C/E',lang:'fr',tip:'Service ist inklusive, Aufrunden oder 5 % bei gutem Service.',drive:'rechts'},
+  ES:{n:'Spanien',cur:'EUR',em:'112',plug:'C/F',lang:'es',tip:'5–10 % oder aufrunden.',drive:'rechts'},
+  PT:{n:'Portugal',cur:'EUR',em:'112',plug:'C/F',lang:'pt',tip:'5–10 % oder aufrunden.',drive:'rechts'},
+  IT:{n:'Italien',cur:'EUR',em:'112',plug:'C/F/L',lang:'it',tip:'„Coperto“ steht oft auf der Rechnung, Trinkgeld optional (aufrunden).',drive:'rechts'},
+  NL:{n:'Niederlande',cur:'EUR',em:'112',plug:'C/F',lang:'nl',tip:'5–10 % oder aufrunden. Viele Läden nur Karte.',drive:'rechts'},
+  BE:{n:'Belgien',cur:'EUR',em:'112',plug:'C/E',lang:'nl',tip:'Service inklusive, aufrunden ist nett.',drive:'rechts'},
+  LU:{n:'Luxemburg',cur:'EUR',em:'112',plug:'C/F',lang:'fr',tip:'5–10 %.',drive:'rechts'},
+  AT:{n:'Österreich',cur:'EUR',em:'112',plug:'C/F',lang:'de',tip:'5–10 %, beim Bezahlen direkt sagen.',drive:'rechts'},
+  CH:{n:'Schweiz',cur:'CHF',em:'112 (Polizei 117, Rettung 144)',plug:'J (C passt)',lang:'de',tip:'Service inklusive, aufrunden.',drive:'rechts'},
+  DE:{n:'Deutschland',cur:'EUR',em:'112 (Polizei 110)',plug:'C/F',lang:'de',tip:'5–10 %.',drive:'rechts'},
+  DK:{n:'Dänemark',cur:'DKK',em:'112',plug:'K (C passt)',lang:'da',tip:'Service inklusive, Trinkgeld optional.',drive:'rechts'},
+  SE:{n:'Schweden',cur:'SEK',em:'112',plug:'C/F',lang:'sv',tip:'Optional, 5–10 %. Fast überall nur Karte.',drive:'rechts'},
+  NO:{n:'Norwegen',cur:'NOK',em:'112 (Polizei), 113 (Rettung)',plug:'C/F',lang:'no',tip:'Optional, aufrunden.',drive:'rechts'},
+  FI:{n:'Finnland',cur:'EUR',em:'112',plug:'C/F',lang:'fi',tip:'Nicht erwartet.',drive:'rechts'},
+  IS:{n:'Island',cur:'ISK',em:'112',plug:'C/F',lang:'is',tip:'Nicht erwartet.',drive:'rechts'},
+  PL:{n:'Polen',cur:'PLN',em:'112',plug:'C/E',lang:'pl',tip:'ca. 10 %.',drive:'rechts'},
+  CZ:{n:'Tschechien',cur:'CZK',em:'112',plug:'C/E',lang:'cs',tip:'ca. 10 %, beim Bezahlen sagen.',drive:'rechts'},
+  HU:{n:'Ungarn',cur:'HUF',em:'112',plug:'C/F',lang:'hu',tip:'10–15 %, Service-Aufschlag prüfen.',drive:'rechts'},
+  HR:{n:'Kroatien',cur:'EUR',em:'112',plug:'C/F',lang:'hr',tip:'ca. 10 %.',drive:'rechts'},
+  SI:{n:'Slowenien',cur:'EUR',em:'112',plug:'C/F',lang:'sl',tip:'5–10 %.',drive:'rechts'},
+  SK:{n:'Slowakei',cur:'EUR',em:'112',plug:'C/E',lang:'sk',tip:'5–10 %.',drive:'rechts'},
+  GR:{n:'Griechenland',cur:'EUR',em:'112',plug:'C/F',lang:'el',tip:'5–10 % oder aufrunden.',drive:'rechts'},
+  CY:{n:'Zypern',cur:'EUR',em:'112',plug:'G',lang:'el',tip:'ca. 10 %.',drive:'links'},
+  MT:{n:'Malta',cur:'EUR',em:'112',plug:'G',lang:'en',tip:'5–10 %.',drive:'links'},
+  RO:{n:'Rumänien',cur:'RON',em:'112',plug:'C/F',lang:'ro',tip:'ca. 10 %.',drive:'rechts'},
+  BG:{n:'Bulgarien',cur:'EUR',em:'112',plug:'C/F',lang:'bg',tip:'ca. 10 %.',drive:'rechts'},
+  EE:{n:'Estland',cur:'EUR',em:'112',plug:'C/F',lang:'et',tip:'Optional, 5–10 %.',drive:'rechts'},
+  LV:{n:'Lettland',cur:'EUR',em:'112',plug:'C/F',lang:'lv',tip:'Optional, 5–10 %.',drive:'rechts'},
+  LT:{n:'Litauen',cur:'EUR',em:'112',plug:'C/F',lang:'lt',tip:'Optional, 5–10 %.',drive:'rechts'},
+  TR:{n:'Türkei',cur:'TRY',em:'112',plug:'C/F',lang:'tr',tip:'5–10 %.',drive:'rechts'},
+  US:{n:'USA',cur:'USD',em:'911',plug:'A/B (110 V)',lang:'en',tip:'18–20 % im Restaurant sind Pflicht-Kultur, 1–2 $ pro Drink.',drive:'rechts'},
+  CA:{n:'Kanada',cur:'CAD',em:'911',plug:'A/B (110 V)',lang:'en',tip:'15–20 %.',drive:'rechts'},
+  MX:{n:'Mexiko',cur:'MXN',em:'911',plug:'A/B (127 V)',lang:'es',tip:'10–15 %.',drive:'rechts'},
+  AE:{n:'Vereinigte Arabische Emirate',cur:'AED',em:'999 (Polizei), 998 (Rettung)',plug:'G',lang:'en',tip:'10–15 %, Service-Charge prüfen.',drive:'rechts'},
+  EG:{n:'Ägypten',cur:'EGP',em:'122 (Polizei), 123 (Rettung)',plug:'C/F',lang:'ar',tip:'10–15 %, kleines Bakschisch üblich.',drive:'rechts'},
+  MA:{n:'Marokko',cur:'MAD',em:'19 (Polizei), 15 (Rettung)',plug:'C/E',lang:'fr',tip:'ca. 10 %.',drive:'rechts'},
+  TN:{n:'Tunesien',cur:'TND',em:'197 (Polizei), 190 (Rettung)',plug:'C/E',lang:'fr',tip:'ca. 10 %.',drive:'rechts'},
+  TH:{n:'Thailand',cur:'THB',em:'191 (Polizei), 1669 (Rettung), 1155 (Touristenpolizei)',plug:'A/B/C/O',lang:'th',tip:'Kleingeld da lassen, 20–50 Baht.',drive:'links'},
+  JP:{n:'Japan',cur:'JPY',em:'110 (Polizei), 119 (Rettung)',plug:'A/B (100 V)',lang:'ja',tip:'Kein Trinkgeld, gilt eher als unhöflich.',drive:'links'},
+  CN:{n:'China',cur:'CNY',em:'110 (Polizei), 120 (Rettung)',plug:'A/C/I',lang:'zh',tip:'Nicht üblich.',drive:'rechts'},
+  KR:{n:'Südkorea',cur:'KRW',em:'112 (Polizei), 119 (Rettung)',plug:'C/F',lang:'ko',tip:'Nicht üblich.',drive:'rechts'},
+  SG:{n:'Singapur',cur:'SGD',em:'999 (Polizei), 995 (Rettung)',plug:'G',lang:'en',tip:'Service-Charge meist inklusive.',drive:'links'},
+  ID:{n:'Indonesien',cur:'IDR',em:'112',plug:'C/F',lang:'id',tip:'5–10 %, oft Service inklusive.',drive:'links'},
+  VN:{n:'Vietnam',cur:'VND',em:'113 (Polizei), 115 (Rettung)',plug:'A/C',lang:'vi',tip:'Kleines Trinkgeld willkommen.',drive:'rechts'},
+  IN:{n:'Indien',cur:'INR',em:'112',plug:'C/D/M',lang:'en',tip:'ca. 10 %.',drive:'links'},
+  AU:{n:'Australien',cur:'AUD',em:'000 (Handy auch 112)',plug:'I',lang:'en',tip:'Nicht erwartet, 10 % bei sehr gutem Service.',drive:'links'},
+  NZ:{n:'Neuseeland',cur:'NZD',em:'111',plug:'I',lang:'en',tip:'Nicht erwartet.',drive:'links'},
+  ZA:{n:'Südafrika',cur:'ZAR',em:'10111 (Polizei), 10177 (Rettung), Handy 112',plug:'M/N',lang:'en',tip:'10–15 %.',drive:'links'},
+  BR:{n:'Brasilien',cur:'BRL',em:'190 (Polizei), 192 (Rettung)',plug:'N (C passt oft)',lang:'pt',tip:'10 % meist schon auf der Rechnung.',drive:'rechts'}
+};
+const PLUG_OK = p => /\b[CEF]\b/.test(p) || /C passt/.test(p);
+
+const PHRASES = {
+  en:['Hello','Thank you','Please','Excuse me / Sorry','Do you speak English?','The bill, please','How much is it?','Where is …?','Help!'],
+  fr:['Bonjour','Merci','S’il vous plaît','Excusez-moi','Vous parlez anglais ?','L’addition, s’il vous plaît','Combien ça coûte ?','Où est … ?','Au secours !'],
+  es:['Hola','Gracias','Por favor','Perdón','¿Habla inglés?','La cuenta, por favor','¿Cuánto cuesta?','¿Dónde está …?','¡Socorro!'],
+  it:['Ciao / Buongiorno','Grazie','Per favore','Scusi','Parla inglese?','Il conto, per favore','Quanto costa?','Dov’è …?','Aiuto!'],
+  pt:['Olá','Obrigado / Obrigada','Por favor','Desculpe','Fala inglês?','A conta, por favor','Quanto custa?','Onde fica …?','Socorro!'],
+  nl:['Hallo','Dank u wel','Alstublieft','Sorry','Spreekt u Engels?','De rekening, alstublieft','Hoeveel kost het?','Waar is …?','Help!'],
+  pl:['Dzień dobry','Dziękuję','Proszę','Przepraszam','Czy mówi pan/pani po angielsku?','Poproszę rachunek','Ile to kosztuje?','Gdzie jest …?','Pomocy!'],
+  cs:['Dobrý den','Děkuji','Prosím','Promiňte','Mluvíte anglicky?','Zaplatím, prosím','Kolik to stojí?','Kde je …?','Pomoc!'],
+  hr:['Bok / Dobar dan','Hvala','Molim','Oprostite','Govorite li engleski?','Račun, molim','Koliko košta?','Gdje je …?','Upomoć!'],
+  tr:['Merhaba','Teşekkürler','Lütfen','Pardon','İngilizce biliyor musunuz?','Hesap lütfen','Ne kadar?','… nerede?','İmdat!'],
+  el:['Γεια σας (Jassas)','Ευχαριστώ (Efcharistó)','Παρακαλώ (Parakaló)','Συγγνώμη (Signómi)','Μιλάτε αγγλικά; (Miláte angliká?)','Τον λογαριασμό, παρακαλώ (Ton logariasmó, parakaló)','Πόσο κάνει; (Póso káni?)','Πού είναι …; (Pu íne …?)','Βοήθεια! (Voíthia!)'],
+  ja:['こんにちは (Konnichiwa)','ありがとう (Arigatō)','お願いします (Onegaishimasu)','すみません (Sumimasen)','英語を話せますか？ (Eigo o hanasemasu ka?)','お会計お願いします (Okaikei onegaishimasu)','いくらですか？ (Ikura desu ka?)','…はどこですか？ (… wa doko desu ka?)','助けて！ (Tasukete!)']
+};
+const PHRASE_DE = ['Hallo','Danke','Bitte','Entschuldigung','Sprechen Sie Englisch?','Die Rechnung, bitte','Wie viel kostet das?','Wo ist …?','Hilfe!'];
+
+// Grobe Fallback-Kurse (1 EUR = x), falls offline. Werden durch Live-Kurse ersetzt.
+const FX_FALLBACK = {EUR:1,GBP:0.86,USD:1.08,CHF:0.94,DKK:7.46,SEK:11.3,NOK:11.6,PLN:4.3,CZK:25,HUF:395,RON:5,TRY:37,CAD:1.48,MXN:20,AED:4,THB:38,JPY:165,CNY:7.8,KRW:1480,SGD:1.45,AUD:1.65,NZD:1.8,ZAR:20,BRL:6,INR:91,ISK:150,IDR:17500,EGP:52,MAD:10.8,TND:3.3,VND:27500};
+
+/* ---------- Vorschlags-Bausteine für den Auto-Plan ---------- */
+// q = Suchbegriff für Google Maps (wird mit dem Ort ergänzt)
+const IDEAS = {
+  kultur:[
+    {t:'Altstadt und Wahrzeichen zu Fuß',d:'Startpunkt am bekanntesten Platz, 2–3 Stunden einplanen.',q:'top sehenswürdigkeiten'},
+    {t:'Free Walking Tour',d:'Gute Einführung in die Stadt, Trinkgeld am Ende üblich (10–15 € p. P.).',q:'free walking tour'},
+    {t:'Historisches Viertel erkunden',d:'Kleine Gassen, Kirchen, Plätze. Morgens ist es leerer.',q:'old town'}],
+  museen:[
+    {t:'Wichtigstes Museum der Stadt',d:'Tickets vorher online buchen, oft Zeitfenster.',q:'museum'},
+    {t:'Kleineres Spezialmuseum',d:'Weniger voll, oft spannender als die großen Häuser.',q:'museum geheimtipp'}],
+  food:[
+    {t:'Markthalle oder Streetfood',d:'Lokale Spezialitäten probieren, ideal mittags.',q:'food market'},
+    {t:'Typisch lokales Abendessen',d:'Restaurant mit regionaler Küche, am Wochenende reservieren.',q:'traditional restaurant'},
+    {t:'Leichtes Mittagessen im Café',d:'Lokale Spezialität oder Gebäck, gut zum Durchatmen.',q:'best cafe'}],
+  nightlife:[
+    {t:'Bar oder Rooftop zum Sonnenuntergang',d:'Rooftops füllen sich ab 19 Uhr, früh hingehen.',q:'rooftop bar'},
+    {t:'Ausgehviertel',d:'Bars und Live-Musik im angesagten Viertel.',q:'nightlife district'}],
+  shopping:[
+    {t:'Shopping-Straße oder Viertel',d:'Einkaufsstraße und kleine Läden in den Seitenstraßen.',q:'shopping street'},
+    {t:'Flohmarkt oder Concept Stores',d:'Öffnungstage vorher prüfen.',q:'flea market'}],
+  sport:[
+    {t:'Stadion oder Sport-Location',d:'Stadiontour oder Fan-Shop, falls kein Spiel ist.',q:'stadium tour'},
+    {t:'Aktiv: Laufrunde oder Radtour',d:'Leihräder oder Laufstrecke am Wasser/Park.',q:'bike rental'}],
+  foto:[
+    {t:'Fotospot mit Aussicht',d:'Bestes Licht zur goldenen Stunde vor Sonnenuntergang.',q:'viewpoint'},
+    {t:'Instagrammable Straße',d:'Bunte Fassaden, morgens ohne Menschenmassen.',q:'instagram spots'}],
+  natur:[
+    {t:'Park oder Uferpromenade',d:'Entspannter Spaziergang, gut zwischen zwei Programmpunkten.',q:'park'},
+    {t:'Ausflug ins Grüne',d:'Halbtagestour in die Umgebung.',q:'nature day trip'}],
+  wellness:[
+    {t:'Spa, Therme oder Sauna',d:'Vorher Zeitfenster buchen.',q:'spa'}],
+  familie:[
+    {t:'Zoo, Aquarium oder Spielplatz-Park',d:'Familienfreundliche Aktivität, Tickets online günstiger.',q:'family attractions'}]
+};
+const TYPE_IDEAS = {
+  strand:[{t:'Strandzeit',d:'Sonnencreme, Wasser, Schatten suchen 12–15 Uhr.',q:'beach'}],
+  wandern:[{t:'Wanderung',d:'Route offline speichern, früh starten, genug Wasser.',q:'hiking trail'}],
+  ski:[{t:'Skifahren',d:'Skipass online, Lifte schließen meist 16:00–16:30.',q:'ski resort'}],
+  business:[{t:'Puffer für Mails und Vorbereitung',d:'Ruhiger Ort mit WLAN.',q:'coworking'}],
+  event:[], stadt:[], rund:[], familie:[]
+};
+const INTERESTS = [['kultur','🏛️ Kultur'],['museen','🖼️ Museen'],['food','🍜 Essen'],['nightlife','🍸 Nightlife'],['shopping','🛍️ Shopping'],['sport','⚽ Sport'],['foto','📸 Fotospots'],['natur','🌳 Natur'],['wellness','🧖 Wellness'],['familie','🧸 Familie']];
+const TYPES = [['stadt','🏙️ Städtetrip'],['event','🎟️ Event / Konzert / Spiel'],['business','💼 Geschäftsreise'],['strand','🏖️ Strand'],['wandern','🥾 Wandern / Natur'],['ski','⛷️ Ski'],['rund','🚐 Rundreise'],['familie','👨‍👩‍👧 Familienurlaub']];
+const MODES = [['flug','✈️ Flug'],['zug','🚆 Zug'],['auto','🚗 Auto'],['bus','🚌 Fernbus']];
+const BUDGETS = [['low','💸 sparsam'],['mid','💶 mittel'],['high','💎 komfortabel']];
+
+/* ---------- Helfer ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const pad = n => String(n).padStart(2, '0');
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseD = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate()+n); return isoDate(d); };
+const daysBetween = (a, b) => Math.round((parseD(b) - parseD(a)) / 864e5);
+const WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const fmtDay = s => { const d = parseD(s); return `${WD[d.getDay()]}, ${d.getDate()}.${d.getMonth()+1}.`; };
+const fmtLong = s => parseD(s).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
+const toMin = t => { if (!t) return null; const [h,m] = t.split(':').map(Number); return h*60+(m||0); };
+const toT = m => { m = Math.max(0, Math.min(23*60+59, Math.round(m))); return `${pad(Math.floor(m/60))}:${pad(m%60)}`; };
+const mapsQ = q => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+const mapsDir = q => 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(q);
+const todayIso = () => isoDate(new Date());
+const fmtMoney = (v, c) => { try { return new Intl.NumberFormat('de-DE', {style:'currency', currency:c, maximumFractionDigits: v >= 1000 ? 0 : 2}).format(v); } catch { return v.toFixed(2)+' '+c; } };
+const WMO = c => c==null?'❔':c===0?'☀️':c<=2?'🌤️':c===3?'☁️':c<=48?'🌫️':c<=57?'🌦️':c<=67?'🌧️':c<=77?'🌨️':c<=82?'🌧️':c<=86?'🌨️':'⛈️';
+
+function toast(t, ms = 2400){ const d = document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(), ms); }
+
+/* ---------- Speicher ---------- */
+let trips = [];
+let settings = {apiKey:'', model:'claude-opus-5-5', effort:'medium', home:'Düsseldorf'};
+function load(){
+  try { trips = JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { trips = []; }
+  try { Object.assign(settings, JSON.parse(localStorage.getItem(LS_SET)) || {}); } catch {}
+}
+function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(trips)); } catch(e){ toast('Speichern fehlgeschlagen: '+e.message); } }
+function saveSettings(){ try { localStorage.setItem(LS_SET, JSON.stringify(settings)); } catch {} }
+const getTrip = id => trips.find(t => t.id === id);
+
+/* ---------- Router / State ---------- */
+let state = {view:'home', tripId:null, tab:'heute', wiz:null, wizStep:0};
+function go(view, extra = {}){ Object.assign(state, {view}, extra); render(); window.scrollTo(0,0); }
+
+/* =========================================================
+   Generatoren (offline)
+   ========================================================= */
+function tripDays(t){ const n = Math.max(0, daysBetween(t.start, t.end)); return Array.from({length:n+1}, (_,i) => addDays(t.start, i)); }
+function cinfo(t){ return COUNTRIES[t.dest?.cc] || null; }
+
+function generatePlan(t){
+  const days = tripDays(t);
+  const city = t.dest?.name || '';
+  const pool = [];
+  (TYPE_IDEAS[t.type] || []).forEach(x => pool.push({...x, cat:t.type}));
+  (t.interests.length ? t.interests : ['kultur','food','foto']).forEach(k => (IDEAS[k]||[]).forEach(x => pool.push({...x, cat:k})));
+  let pi = 0;
+  const nextIdea = () => pool.length ? pool[(pi++) % pool.length] : null;
+  const business = t.type === 'business';
+  const stay = t.stay?.addr || t.stay?.name || '';
+  const out = [];
+
+  days.forEach((date, idx) => {
+    const items = [];
+    const add = (time, title, desc = '', extra = {}) => items.push({id:uid(), time, title, desc, done:false, ...extra});
+    const first = idx === 0, last = idx === days.length - 1;
+    let dayStart = 9*60, dayEnd = 22*60;
+    const fixed = (t.fixed||[]).filter(f => f.date === date);
+
+    if (first){
+      const dep = toMin(t.depTime), arr = toMin(t.arrTime);
+      if (t.mode === 'flug'){
+        if (dep != null){ add(toT(dep-150), 'Los zum Flughafen', 'Ca. 2 Std. vor Abflug am Flughafen sein (Gepäckabgabe, Sicherheitskontrolle).', {cat:'reise'}); add(toT(dep), 'Abflug'+(t.outbound?' '+t.outbound:''), 'Bordkarte im Wallet, Ausweis griffbereit.', {cat:'reise', fixed:true}); }
+        if (arr != null){ add(toT(arr), 'Landung'+(city?' in '+city:''), 'Ortszeit. Mobile Daten/eSIM einschalten, Transfer in die Stadt.', {cat:'reise', fixed:true}); }
+      } else if (t.mode === 'zug' || t.mode === 'bus'){
+        if (dep != null){ add(toT(dep-30), 'Zum Bahnhof / Busbahnhof', 'Gleis bzw. Steig in der App prüfen.', {cat:'reise'}); add(toT(dep), 'Abfahrt'+(t.outbound?' '+t.outbound:''), '', {cat:'reise', fixed:true}); }
+        if (arr != null) add(toT(arr), 'Ankunft'+(city?' in '+city:''), '', {cat:'reise', fixed:true});
+      } else if (t.mode === 'auto'){
+        if (dep != null) add(toT(dep), 'Abfahrt mit dem Auto', 'Tanken, Vignette/Maut prüfen, Route offline speichern.', {cat:'reise', fixed:true});
+        if (arr != null) add(toT(arr), 'Ankunft, Parkplatz suchen', '', {cat:'reise', fixed:true});
+      }
+      const a = arr != null ? arr : (dep != null ? dep + 180 : 13*60);
+      if (stay) add(toT(a+60), 'Unterkunft: Gepäck abgeben / Check-in', stay, {cat:'reise', map:mapsDir(stay)});
+      dayStart = a + 120;
+    }
+    if (last && days.length > 1){
+      const back = toMin(t.retTime);
+      if (stay) add('10:30', 'Check-out', 'Gepäck ggf. an der Rezeption lassen.', {cat:'reise'});
+      if (back != null){
+        const lead = t.mode === 'flug' ? 180 : t.mode === 'auto' ? 15 : 45;
+        add(toT(back-lead), t.mode==='flug' ? 'Los zum Flughafen' : t.mode==='auto' ? 'Gepäck ins Auto' : 'Zum Bahnhof / Busbahnhof', t.mode==='flug' ? 'Transferzeit + 2 Std. Puffer am Flughafen.' : '', {cat:'reise'});
+        add(toT(back), 'Rückreise'+(t.inbound?' '+t.inbound:''), '', {cat:'reise', fixed:true});
+        dayEnd = back - lead - 30;
+      } else dayEnd = 16*60;
+    } else if (first && days.length === 1){
+      const back = toMin(t.retTime);
+      if (back != null){ add(toT(back - (t.mode==='flug'?180:45)), 'Rückweg starten', '', {cat:'reise'}); add(toT(back), 'Rückreise'+(t.inbound?' '+t.inbound:''), '', {cat:'reise', fixed:true}); dayEnd = back - 200; }
+    }
+
+    // Fixtermine
+    const busy = [];
+    fixed.forEach(f => {
+      const m = toMin(f.time);
+      if (m != null){
+        add(toT(m-60), 'Aufbruch zu: '+f.title, f.place ? 'Anfahrt einplanen, Puffer 15 Min.' : '', {cat:'reise', map: f.place ? mapsDir(f.place) : null});
+        busy.push([m-60, m + (f.dur ? +f.dur*60 : 180)]);
+      }
+      add(f.time || '', f.title, f.place || '', {cat:'fix', fixed:true, map: f.place ? mapsQ(f.place) : null});
+    });
+    const free = (s, e) => s >= dayStart && e <= dayEnd && !busy.some(([a,b]) => s < b && e > a);
+
+    // Slots füllen
+    const slots = business && !t.fixedFree
+      ? [[19*60, 21*60, 'abend']]
+      : [[10*60, 12*60, 'vorm'], [12*60+30, 13*60+30, 'mittag'], [14*60, 17*60, 'nachm'], [17*60+30, 19*60, 'golden'], [19*60+30, 21*60+30, 'abend']];
+    slots.forEach(([s, e, kind]) => {
+      if (!free(s, e)) return;
+      let idea;
+      if (kind === 'mittag') idea = idx % 2 ? IDEAS.food[2] : IDEAS.food[0];
+      else if (kind === 'abend') idea = (t.interests.includes('nightlife') && idx % 2) ? IDEAS.nightlife[idx % 2] : IDEAS.food[1];
+      else if (kind === 'golden') idea = t.interests.includes('foto') ? IDEAS.foto[0] : (t.interests.includes('nightlife') ? IDEAS.nightlife[0] : null);
+      else idea = nextIdea();
+      if (!idea) return;
+      add(toT(s), idea.t, idea.d, {cat:'idee', map: mapsQ(idea.q + ' ' + city)});
+    });
+
+    items.sort((a,b) => (toMin(a.time) ?? 9999) - (toMin(b.time) ?? 9999));
+    let title = first ? 'Anreise' : last && days.length>1 ? 'Abreise' : `Tag ${idx+1}`;
+    if (fixed.length) title += ' · ' + fixed.map(f=>f.title).join(', ');
+    out.push({date, title, items});
+  });
+  return {days: out, source:'auto', created: Date.now()};
+}
+
+function generateTips(t){
+  const c = cinfo(t), tips = [];
+  const T = (icon, title, text) => tips.push({icon, title, text});
+  if (c){
+    if (c.cur !== 'EUR') T('💳','Bezahlen', `Landeswährung ${c.cur}. Am besten Kreditkarte ohne Auslandsgebühr; am Terminal immer in ${c.cur} zahlen (nicht in Euro umrechnen lassen).`);
+    else T('💳','Bezahlen','Euro-Land, Karte funktioniert fast überall. Etwas Bargeld für Kleinigkeiten.');
+    T('🔌','Strom', PLUG_OK(c.plug) ? `Steckertyp ${c.plug}: deutsche Stecker passen in der Regel.` : `Steckertyp ${c.plug}: Reiseadapter einpacken!`);
+    T('💁','Trinkgeld', c.tip);
+    if (c.drive === 'links') T('🚸','Linksverkehr', 'Beim Überqueren der Straße zuerst nach rechts schauen.');
+    if (!['DE','AT','CH','LU'].includes(t.dest.cc) && !/^(AT|BE|BG|CY|CZ|DK|EE|ES|FI|FR|GR|HR|HU|IE|IT|LT|LV|MT|NL|PL|PT|RO|SE|SI|SK|IS|NO|LI)$/.test(t.dest.cc))
+      T('📶','Mobile Daten', 'Außerhalb der EU gilt kein EU-Roaming. Eine eSIM (z. B. Saily, Airalo, Holafly) vorher installieren und erst vor Ort aktivieren.');
+    if (t.dest.cc === 'GB') T('🛂','Einreise UK', 'Für Deutsche ist eine ETA (elektronische Einreisegenehmigung) nötig, vorher in der UK-ETA-App beantragen. Kontaktlos zahlen funktioniert in Bus und U-Bahn direkt mit der Karte.');
+    if (t.dest.cc === 'US') T('🛂','Einreise USA', 'ESTA rechtzeitig vor Abflug beantragen (nur offizielle Seite).');
+  }
+  T('🗺️','Offline-Karten', `Google Maps: Gebiet „${t.dest?.name||'Zielort'}“ offline herunterladen. Spart Daten und hilft ohne Netz.`);
+  T('🧾','Dokumente', 'Buchungscodes, Tickets und Versicherungsnummer im Tab „Tools > Dokumente“ ablegen. Ausweis zusätzlich als Foto sichern.');
+  if (t.mode === 'flug') T('✈️','Flug', `Online-Check-in öffnet meist 24–48 Std. vorher.${t.carryOn ? ' Nur Handgepäck: Flüssigkeiten bis 100 ml in einen 1-Liter-Beutel.' : ''}`);
+  if (t.mode === 'zug') T('🚆','Bahn', 'Sitzplatzreservierung lohnt sich am Freitag und Sonntag. Fahrgastrechte: ab 60 Min. Verspätung gibt es Geld zurück.');
+  if (t.mode === 'auto') T('🚗','Auto', 'Vignette, Maut und Umweltzonen am Zielort prüfen. Warnweste und Verbandskasten sind in vielen Ländern Pflicht.');
+  if (t.type === 'event') T('🎟️','Event', 'Ticket als Wallet-Pass oder Screenshot speichern. Taschenregeln des Veranstalters prüfen (oft nur kleine oder durchsichtige Taschen) und Gepäck vorher in der Unterkunft lassen.');
+  if (t.type === 'business') T('💼','Geschäftsreise', 'Belege direkt im Ausgaben-Tracker erfassen und fotografieren. Ladegeräte und Adapter fürs Notebook nicht vergessen.');
+  if (t.type === 'strand') T('🌊','Strand', 'Wertsachen nicht unbeaufsichtigt lassen. Sonnencreme vor Ort ist oft teurer.');
+  if (t.type === 'wandern') T('⛰️','Wandern', 'Route und Wetter am Vorabend prüfen, jemandem die Tour mitteilen. Offline-Karte (z. B. Komoot) speichern.');
+  if (t.budget === 'low') T('🪙','Sparen', 'Mittags essen gehen (Mittagsmenüs sind günstiger), Tageskarten für den Nahverkehr, kostenlose Museumstage suchen.');
+  if (t.budget === 'high') T('🥂','Komfort', 'Top-Restaurants und Rooftops 1–2 Wochen vorher reservieren, Fast-Track-Tickets für große Attraktionen.');
+  if (t.people > 1) T('👥','Gruppe', 'Ausgaben im Tracker mit „Wer hat bezahlt“ erfassen, die App rechnet aus, wer wem wie viel schuldet.');
+  T('🆘','Notfall', `Notruf ${c ? c.em : '112 (EU), sonst lokale Nummer prüfen'}. Krisenvorsorgeliste „Elefand“ des Auswärtigen Amts für Auslandsreisen.`);
+  return tips;
+}
+
+function generateChecks(t, wxDays){
+  const days = tripDays(t).length, nights = Math.max(1, days-1);
+  const c = cinfo(t);
+  const before = (n) => addDays(t.start, -n);
+  const prep = [
+    {t:'Ausweis/Reisepass gültig?', due: before(14)},
+    {t:'Reise-/Auslandskrankenversicherung prüfen', due: before(7)},
+    {t:'Einreisebestimmungen & Sicherheitshinweise prüfen (Auswärtiges Amt)', due: before(7), link:'https://www.auswaertiges-amt.de/de/ReiseUndSicherheit/reise-und-sicherheitshinweise'},
+  ];
+  if (t.mode === 'flug') prep.push({t:'Online-Check-in erledigen', due: before(1)}, {t:'Bordkarte ins Wallet legen', due: before(1)});
+  if (t.mode === 'zug') prep.push({t:'Tickets/Reservierung im DB Navigator prüfen', due: before(1)});
+  if (t.mode === 'auto') prep.push({t:'Reifendruck, Öl, Vignette/Maut prüfen', due: before(2)});
+  if (c && !PLUG_OK(c.plug)) prep.push({t:`Reiseadapter Typ ${c.plug} besorgen`, due: before(3)});
+  if (c && c.cur !== 'EUR') prep.push({t:`Karte ohne Auslandsgebühr bereit / etwas ${c.cur} Bargeld`, due: before(3)});
+  if (t.dest?.cc === 'GB') prep.push({t:'UK-ETA beantragt?', due: before(7)});
+  if (t.dest?.cc === 'US') prep.push({t:'ESTA beantragt?', due: before(7)});
+  prep.push({t:'eSIM / Datenpaket installieren', due: before(2)}, {t:'Offline-Karte herunterladen', due: before(1)}, {t:'Buchungsbestätigungen in „Dokumente“ ablegen', due: before(1)});
+  (t.fixed||[]).forEach(f => prep.push({t:`Ticket/Reservierung für „${f.title}“ griffbereit`, due: before(1)}));
+
+  const maxT = wxDays?.length ? Math.max(...wxDays.map(d=>d.tmax)) : null;
+  const minT = wxDays?.length ? Math.min(...wxDays.map(d=>d.tmin)) : null;
+  const rain = wxDays?.some(d => d.rain >= 40);
+  const k = Math.min(nights+1, 7);
+  const pack = [
+    'Ausweis/Reisepass','Handy + Ladekabel','Powerbank','Kopfhörer','Kredit-/Debitkarte','Krankenkassenkarte',
+    `${k}× Unterwäsche und Socken`, `${Math.min(k, 5)}× T-Shirts/Oberteile`, `${Math.max(1, Math.ceil(k/3))}× Hose`,
+    'Bequeme Schuhe','Zahnbürste, Zahnpasta','Deo','Medikamente + Pflaster','Schlafsachen'
+  ];
+  if (c && !PLUG_OK(c.plug)) pack.push(`Reiseadapter (Typ ${c.plug})`);
+  if (t.carryOn) pack.push('1-Liter-Beutel für Flüssigkeiten (je max. 100 ml)');
+  if (rain) pack.push('Regenjacke / kleiner Schirm');
+  if (minT != null && minT < 8) pack.push('Warme Jacke, Mütze');
+  if (maxT != null && maxT > 24) pack.push('Sonnenbrille, Sonnencreme, Kappe');
+  if (wxDays == null || !wxDays.length) pack.push('Wetter 3 Tage vorher checken und Liste ergänzen');
+  if (t.type === 'business') pack.push('Laptop + Ladegerät','Business-Outfit','Visitenkarten / Unterlagen');
+  if (t.type === 'strand') pack.push('Badesachen','Strandtuch','Sonnencreme LSF 50','Flip-Flops');
+  if (t.type === 'wandern') pack.push('Wanderschuhe','Rucksack','Trinkflasche','Regenschutz','Snacks');
+  if (t.type === 'ski') pack.push('Skijacke/-hose','Handschuhe','Skibrille','Funktionsunterwäsche');
+  if (t.type === 'event') pack.push('Event-Ticket (digital + Screenshot)','Erlaubte Tasche laut Veranstalter','Fan-Outfit');
+  if (t.type === 'familie') pack.push('Snacks und Beschäftigung für Kinder','Kinderausweise');
+  if (t.interests.includes('foto')) pack.push('Kamera / Handy-Speicher frei machen');
+  if (t.interests.includes('nightlife')) pack.push('Outfit für den Abend');
+
+  const mk = (arr) => arr.map(x => typeof x === 'string' ? {id:uid(), t:x, done:false} : {id:uid(), done:false, ...x});
+  return {prep: mk(prep), pack: mk(pack), custom: []};
+}
+
+/* =========================================================
+   Online-Dienste
+   ========================================================= */
+async function geocode(q){
+  const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?count=6&language=de&format=json&name=' + encodeURIComponent(q));
+  if (!r.ok) throw new Error('Ortssuche nicht erreichbar');
+  const j = await r.json();
+  return (j.results||[]).map(x => ({name:x.name, country:x.country, cc:x.country_code, region:x.admin1||'', lat:x.latitude, lon:x.longitude, tz:x.timezone}));
+}
+async function fetchWeather(t){
+  if (!t.dest?.lat) return null;
+  const today = todayIso();
+  const lastAvail = addDays(today, 15);
+  if (t.start > lastAvail || t.end < today) return {unavailable:true, from: addDays(t.start, -15)};
+  const s = t.start < today ? today : t.start, e = t.end > lastAvail ? lastAvail : t.end;
+  const u = `https://api.open-meteo.com/v1/forecast?latitude=${t.dest.lat}&longitude=${t.dest.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto&start_date=${s}&end_date=${e}`;
+  const r = await fetch(u); if (!r.ok) throw new Error('Wetter nicht erreichbar');
+  const j = await r.json(), d = j.daily;
+  return {fetched: Date.now(), days: d.time.map((date,i) => ({date, code:d.weather_code[i], tmax:Math.round(d.temperature_2m_max[i]), tmin:Math.round(d.temperature_2m_min[i]), rain:d.precipitation_probability_max[i] ?? 0, sunrise:(d.sunrise[i]||'').slice(11), sunset:(d.sunset[i]||'').slice(11)}))};
+}
+let fx = null;
+async function loadFx(){
+  try { fx = JSON.parse(localStorage.getItem('ta.fx')); } catch {}
+  if (fx && Date.now() - fx.at < 6*3600e3) return fx;
+  try {
+    const r = await fetch('https://api.frankfurter.dev/v1/latest?base=EUR');
+    if (r.ok){ const j = await r.json(); fx = {at:Date.now(), date:j.date, rates:{EUR:1, ...j.rates}, live:true}; localStorage.setItem('ta.fx', JSON.stringify(fx)); }
+  } catch {}
+  if (!fx) fx = {at:0, rates:FX_FALLBACK, live:false};
+  return fx;
+}
+const rate = cur => (fx?.rates?.[cur]) ?? FX_FALLBACK[cur] ?? null;
+
+/* ---------- Claude API (eigener Schlüssel, direkt aus dem Browser) ---------- */
+function tripBrief(t){
+  const c = cinfo(t);
+  return [
+    `Ziel: ${t.dest?.name||'?'}${t.dest?.country?', '+t.dest.country:''}`,
+    `Zeitraum: ${fmtLong(t.start)} bis ${fmtLong(t.end)} (${tripDays(t).length} Tage)`,
+    `Anreise: ${t.mode}${t.outbound?' ('+t.outbound+')':''}, Abfahrt ${t.depTime||'?'}, Ankunft ${t.arrTime||'?'} Ortszeit`,
+    `Rückreise: ${t.inbound||''} um ${t.retTime||'?'}`,
+    `Unterkunft: ${[t.stay?.name, t.stay?.addr].filter(Boolean).join(', ')||'noch offen'}`,
+    `Reiseart: ${TYPES.find(x=>x[0]===t.type)?.[1]||t.type}`,
+    `Personen: ${t.people}, Budget: ${t.budget}`,
+    `Interessen: ${t.interests.join(', ')||'keine Angabe'}`,
+    `Nur Handgepäck: ${t.carryOn?'ja':'nein'}`,
+    `Fixtermine: ${(t.fixed||[]).map(f=>`${f.date} ${f.time||''} ${f.title}${f.place?' @ '+f.place:''}`).join('; ')||'keine'}`,
+    `Wünsche/Notizen: ${t.notes||'-'}`,
+    t.weather?.days?.length ? `Wetter: ${t.weather.days.map(d=>`${d.date}: ${d.tmin}-${d.tmax}°C, Regen ${d.rain}%`).join('; ')}` : '',
+    c ? `Land: Notruf ${c.em}, Stecker ${c.plug}, Währung ${c.cur}` : ''
+  ].filter(Boolean).join('\n');
+}
+async function callClaude({system, messages, maxTokens = 16000, schema = null}){
+  if (!settings.apiKey) throw new Error('Kein API-Schlüssel hinterlegt (Tab „KI“ → Einstellungen).');
+  const body = {model: settings.model, max_tokens: maxTokens, system, messages,
+    output_config: {effort: settings.effort || 'medium', ...(schema ? {format:{type:'json_schema', schema}} : {})}};
+  const send = async (withFallback) => fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'content-type':'application/json','x-api-key':settings.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true',
+      ...(withFallback ? {'anthropic-beta':'server-side-fallback-2026-07-01'} : {})},
+    body: JSON.stringify(withFallback ? {...body, fallbacks:'default'} : body)
+  });
+  let r = await send(true);
+  if (r.status === 400) r = await send(false); // Fallback-Option nicht verfügbar → ohne erneut
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j?.error?.message || ('API-Fehler '+r.status));
+  if (j.stop_reason === 'refusal') throw new Error('Die KI hat diese Anfrage abgelehnt. Formuliere sie bitte anders.');
+  const text = (j.content||[]).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  if (j.stop_reason === 'max_tokens' && schema) throw new Error('Antwort war zu lang und wurde abgeschnitten. Versuch es mit weniger Tagen.');
+  return text;
+}
+const PLAN_SCHEMA = {
+  type:'object', additionalProperties:false, required:['days','tips'],
+  properties:{
+    days:{type:'array', items:{type:'object', additionalProperties:false, required:['date','title','items'],
+      properties:{date:{type:'string'}, title:{type:'string'},
+        items:{type:'array', items:{type:'object', additionalProperties:false, required:['time','title','desc','place'],
+          properties:{time:{type:'string'}, title:{type:'string'}, desc:{type:'string'}, place:{type:'string'}}}}}}},
+    tips:{type:'array', items:{type:'object', additionalProperties:false, required:['icon','title','text'],
+      properties:{icon:{type:'string'}, title:{type:'string'}, text:{type:'string'}}}}
+  }
+};
+async function aiPlan(t){
+  const system = 'Du bist ein erfahrener, ehrlicher Reiseplaner. Du planst realistische Tage mit konkreten, real existierenden Orten (Namen so, dass man sie in Google Maps findet), realistischen Wegezeiten und Puffern. Fixtermine und Reisezeiten sind unverrückbar. Antworte auf Deutsch, knapp und praxisnah. Wenn du dir bei Öffnungszeiten oder Preisen nicht sicher bist, schreib „vorher prüfen“ statt etwas zu erfinden.';
+  const user = `Erstelle einen detaillierten Tagesplan für diese Reise. Jeder Tag zwischen Anreise und Abreise bekommt 5–9 Einträge (Uhrzeit HH:MM, Titel, 1–2 Sätze Beschreibung mit Insider-Tipp, Ort für Google Maps oder leer). Anreise- und Abreisetag inkl. Transfers. Dazu 6–10 Tipps speziell für diese Reise (Icon als ein Emoji).\n\n${tripBrief(t)}\n\nDatumsformat: YYYY-MM-DD. Tage: ${tripDays(t).join(', ')}.`;
+  const txt = await callClaude({system, messages:[{role:'user', content:user}], schema: PLAN_SCHEMA});
+  const j = JSON.parse(txt);
+  const days = tripDays(t).map(date => {
+    const d = j.days.find(x => x.date === date) || {title:'', items:[]};
+    return {date, title:d.title, items:d.items.map(i => ({id:uid(), time:i.time, title:i.title, desc:i.desc, done:false, cat:'ai', map: i.place ? mapsQ(i.place + (t.dest?.name ? ', '+t.dest.name : '')) : null}))
+      .sort((a,b)=>(toMin(a.time)??9999)-(toMin(b.time)??9999))};
+  });
+  return {plan:{days, source:'ai', created:Date.now()}, tips:j.tips};
+}
+
+/* =========================================================
+   Rendering
+   ========================================================= */
+const app = $('#app');
+function render(){
+  const tabs = $('#tabs');
+  if (state.view === 'home'){ tabs.classList.add('hide'); app.innerHTML = viewHome(); }
+  else if (state.view === 'wizard'){ tabs.classList.add('hide'); app.innerHTML = viewWizard(); bindWizard(); }
+  else if (state.view === 'trip'){
+    const t = getTrip(state.tripId); if (!t) return go('home');
+    tabs.classList.remove('hide'); tabs.innerHTML = tabBar();
+    app.innerHTML = tripHero(t) + `<div class="wrap">${({heute:viewToday, plan:viewPlan, listen:viewLists, tools:viewTools, ki:viewAI})[state.tab](t)}</div>`;
+    afterTrip(t);
+  }
+}
+function tabBar(){
+  return [['heute','🧭','Heute'],['plan','🗓️','Plan'],['listen','✅','Listen'],['tools','🧰','Tools'],['ki','✨','KI']]
+    .map(([k,i,l]) => `<button data-tab="${k}" class="${state.tab===k?'on':''}"><span class="i">${i}</span>${l}</button>`).join('');
+}
+function tripHero(t){
+  const n = tripDays(t).length;
+  return `<header class="hero"><div class="wrap">
+    <div class="top"><button class="iconbtn" data-act="home">‹ Reisen</button><span class="sp"></span><button class="iconbtn" data-act="edit">Bearbeiten</button></div>
+    <h1>${esc(t.dest?.name || t.title)}</h1>
+    <div class="sub">${fmtDay(t.start)} – ${fmtDay(t.end)} · ${n} ${n===1?'Tag':'Tage'} · ${esc(TYPES.find(x=>x[0]===t.type)?.[1]||'')}</div>
+  </div></header>`;
+}
+
+/* ---------- Home ---------- */
+function viewHome(){
+  const list = trips.slice().sort((a,b)=>a.start.localeCompare(b.start));
+  return `<header class="hero"><div class="wrap">
+      <div class="top"><span style="font-size:1.4rem">🧳</span><b>Trip Assistant</b><span class="sp"></span><button class="iconbtn" data-act="settings">⚙︎</button></div>
+      <h1>Wohin geht’s als Nächstes?</h1>
+      <div class="sub">Eckdaten eingeben, Plan, Tipps und Tools bekommen.</div>
+    </div></header>
+    <div class="wrap">
+      <button class="btn block" style="margin-top:16px" data-act="new">＋ Neue Reise planen</button>
+      ${list.length ? '<h2>Deine Reisen</h2>' + list.map(t => {
+        const dd = daysBetween(todayIso(), t.start), past = t.end < todayIso();
+        const badge = past ? 'vorbei' : dd > 0 ? `in ${dd} ${dd===1?'Tag':'Tagen'}` : 'läuft gerade';
+        return `<div class="card trip" data-open="${t.id}"><div class="em">${(TYPES.find(x=>x[0]===t.type)?.[1]||'🧳').split(' ')[0]}</div>
+          <div class="grow"><b>${esc(t.dest?.name||t.title)}</b><div class="small muted">${fmtDay(t.start)} – ${fmtDay(t.end)} · ${badge}</div></div><div class="muted">›</div></div>`;
+      }).join('') : `<div class="empty"><div class="em">🗺️</div><p class="muted">Noch keine Reise angelegt.<br>Leg los mit „Neue Reise planen“.</p></div>`}
+      <p class="small muted" style="text-align:center;margin-top:30px">Prototyp v${APP_VERSION} · Daten bleiben auf deinem Gerät</p>
+    </div>`;
+}
+
+/* ---------- Wizard ---------- */
+const WSTEPS = ['Ziel & Datum','Anreise','Unterkunft & Termine','Stil & Wünsche'];
+function blankTrip(){
+  const s = addDays(todayIso(), 3);
+  return {id:uid(), title:'', dest:null, destQ:'', start:s, end:addDays(s,2), mode:'flug', outbound:'', depTime:'', arrTime:'', inbound:'', retTime:'',
+    stay:{name:'', addr:''}, type:'stadt', people:1, budget:'mid', interests:['kultur','food'], fixed:[], carryOn:false, notes:'',
+    plan:null, tips:[], checks:null, expenses:[], docs:[], chat:[], weather:null};
+}
+function viewWizard(){
+  const w = state.wiz, s = state.wizStep;
+  const chips = (arr, key, multi=false) => `<div class="chips">${arr.map(([k,l]) => `<span class="chip ${multi ? (w[key].includes(k)?'on':'') : (w[key]===k?'on':'')}" data-chip="${key}" data-v="${k}" data-multi="${multi?1:0}">${l}</span>`).join('')}</div>`;
+  let body = '';
+  if (s === 0) body = `
+    <label class="f">Reiseziel (Stadt oder Region)</label>
+    <input class="t" id="w-dest" placeholder="z. B. Barcelona" value="${esc(w.dest ? w.dest.name : w.destQ)}" autocomplete="off">
+    <div id="w-sug"></div>
+    ${w.dest ? `<div class="small muted" style="margin-top:6px">✓ ${esc(w.dest.name)}${w.dest.region?', '+esc(w.dest.region):''}, ${esc(w.dest.country||'')}</div>` : `<div class="small muted" style="margin-top:6px">Tippe und wähle einen Vorschlag (für Wetter und Länder-Infos). Offline geht auch ein freier Name.</div>`}
+    <div class="grid2"><div><label class="f">Hinreise am</label><input class="t" type="date" id="w-start" value="${w.start}"></div>
+    <div><label class="f">Rückreise am</label><input class="t" type="date" id="w-end" value="${w.end}"></div></div>
+    <div class="grid2"><div><label class="f">Personen</label><input class="t" type="number" min="1" max="30" id="w-people" value="${w.people}"></div><div></div></div>`;
+  if (s === 1) body = `
+    <label class="f">Wie reist du an?</label>${chips(MODES,'mode')}
+    <label class="f">Hinreise: Verbindung (optional)</label><input class="t" id="w-out" placeholder="${w.mode==='flug'?'z. B. EW9464 DUS → LHR':'z. B. ICE 123'}" value="${esc(w.outbound)}">
+    <div class="grid2"><div><label class="f">Abfahrt/Abflug (Uhrzeit)</label><input class="t" type="time" id="w-dep" value="${w.depTime}"></div>
+    <div><label class="f">Ankunft (Ortszeit)</label><input class="t" type="time" id="w-arr" value="${w.arrTime}"></div></div>
+    <label class="f">Rückreise: Verbindung (optional)</label><input class="t" id="w-in" placeholder="z. B. EW9467 LHR → DUS" value="${esc(w.inbound)}">
+    <div class="grid2"><div><label class="f">Abfahrt/Abflug zurück</label><input class="t" type="time" id="w-ret" value="${w.retTime}"></div><div></div></div>
+    ${w.mode==='flug' ? `<label class="chk ${w.carryOn?'on':''}" data-toggle="carryOn" style="margin-top:10px"><span class="box">${w.carryOn?'✓':''}</span><span class="lbl">Nur Handgepäck</span></label>` : ''}`;
+  if (s === 2) body = `
+    <label class="f">Unterkunft (Name)</label><input class="t" id="w-stay" placeholder="z. B. Hotel Arts" value="${esc(w.stay.name)}">
+    <label class="f">Adresse der Unterkunft</label><input class="t" id="w-addr" placeholder="Straße, Ort" value="${esc(w.stay.addr)}">
+    <h2>Fixtermine</h2><p class="small muted" style="margin-top:-6px">Spiel, Konzert, Meeting, Tischreservierung … werden fest eingeplant.</p>
+    <div id="w-fixed">${w.fixed.map((f,i) => `<div class="list-x"><div class="grow"><b>${esc(f.title)}</b><div class="small muted">${fmtDay(f.date)} ${esc(f.time||'')} ${f.place?'· '+esc(f.place):''}</div></div><button class="x" data-delfix="${i}">✕</button></div>`).join('')}</div>
+    <div class="card" style="padding:10px 12px">
+      <input class="t" id="f-title" placeholder="Was? (z. B. NFL-Spiel)">
+      <div class="grid2" style="margin-top:8px"><select class="t" id="f-date">${tripDays(w).map(d=>`<option value="${d}">${fmtDay(d)}</option>`).join('')}</select><input class="t" type="time" id="f-time"></div>
+      <div class="grid2" style="margin-top:8px"><input class="t" id="f-place" placeholder="Ort (optional)"><input class="t" type="number" min="0.5" step="0.5" id="f-dur" placeholder="Dauer (Std.)"></div>
+      <button class="btn sec block" style="margin-top:8px" data-act="addfix">＋ Termin hinzufügen</button>
+    </div>`;
+  if (s === 3) body = `
+    <label class="f">Art der Reise</label>${chips(TYPES,'type')}
+    <label class="f">Was interessiert dich?</label>${chips(INTERESTS,'interests',true)}
+    <label class="f">Budget</label>${chips(BUDGETS,'budget')}
+    <label class="f">Besondere Wünsche (optional)</label><textarea class="t" id="w-notes" placeholder="z. B. Montag spontan, gute Fotospots, vegetarisch, wenig laufen …">${esc(w.notes)}</textarea>`;
+  return `<header class="hero"><div class="wrap">
+      <div class="top"><button class="iconbtn" data-act="${state.editing?'cancel-edit':'home'}">‹ Abbrechen</button><span class="sp"></span><span class="small" style="opacity:.8">${s+1}/${WSTEPS.length}</span></div>
+      <h1>${WSTEPS[s]}</h1>
+      <div class="steps">${WSTEPS.map((_,i)=>`<i class="${i<=s?'on':''}"></i>`).join('')}</div>
+    </div></header>
+    <div class="wrap">${body}
+      <div class="row" style="margin:22px 0">
+        ${s>0?'<button class="btn sec grow" data-act="wback">Zurück</button>':''}
+        <button class="btn grow" data-act="wnext">${s===WSTEPS.length-1 ? (state.editing?'Speichern & neu planen':'✨ Reise erstellen') : 'Weiter'}</button>
+      </div>
+    </div>`;
+}
+function readWizard(){
+  const w = state.wiz, v = id => $('#'+id)?.value;
+  if ($('#w-dest')){ const q = v('w-dest').trim(); if (!w.dest || q !== w.dest.name){ w.destQ = q; if (w.dest && q !== w.dest.name) w.dest = null; } }
+  if ($('#w-start')){ w.start = v('w-start') || w.start; w.end = v('w-end') || w.end; if (w.end < w.start) w.end = w.start; w.people = Math.max(1, +v('w-people')||1); }
+  if ($('#w-out')){ w.outbound = v('w-out').trim(); w.depTime = v('w-dep'); w.arrTime = v('w-arr'); w.inbound = v('w-in').trim(); w.retTime = v('w-ret'); }
+  if ($('#w-stay')){ w.stay = {name:v('w-stay').trim(), addr:v('w-addr').trim()}; }
+  if ($('#w-notes')){ w.notes = v('w-notes').trim(); }
+}
+let sugTimer = null;
+function bindWizard(){
+  const inp = $('#w-dest'); if (!inp) return;
+  inp.addEventListener('input', () => {
+    clearTimeout(sugTimer); const q = inp.value.trim();
+    if (q.length < 2){ $('#w-sug').innerHTML=''; return; }
+    sugTimer = setTimeout(async () => {
+      try {
+        const res = await geocode(q);
+        state._sug = res;
+        $('#w-sug').innerHTML = res.length ? `<div class="sug">${res.map((r,i)=>`<button data-sug="${i}">${esc(r.name)}<span class="small muted"> · ${esc([r.region,r.country].filter(Boolean).join(', '))}</span></button>`).join('')}</div>` : '';
+      } catch { $('#w-sug').innerHTML = '<div class="small muted" style="margin-top:6px">Offline: Ort wird ohne Wetter gespeichert.</div>'; }
+    }, 300);
+  });
+}
+function finishWizard(){
+  const w = state.wiz;
+  if (!w.dest && w.destQ) w.dest = {name:w.destQ, country:'', cc:'', lat:null, lon:null, tz:null};
+  if (!w.dest){ state.wizStep = 0; render(); return toast('Bitte ein Reiseziel eingeben.'); }
+  w.title = w.dest.name;
+  w.plan = generatePlan(w); w.tips = generateTips(w);
+  const old = getTrip(w.id);
+  const checks = generateChecks(w, w.weather?.days);
+  if (old?.checks){ // erledigte Häkchen behalten
+    const done = new Set([...old.checks.prep, ...old.checks.pack].filter(x=>x.done).map(x=>x.t));
+    [...checks.prep, ...checks.pack].forEach(x => { if (done.has(x.t)) x.done = true; });
+    checks.custom = old.checks.custom || [];
+  }
+  w.checks = checks;
+  if (old) trips[trips.indexOf(old)] = w; else trips.push(w);
+  save(); state.editing = false;
+  go('trip', {tripId:w.id, tab:'plan'});
+  toast(old ? 'Reise aktualisiert, Plan neu erstellt' : 'Reise erstellt! Dein Plan ist fertig.');
+  refreshWeather(w, true);
+}
+
+/* ---------- Heute ---------- */
+function viewToday(t){
+  const today = todayIso(), dd = daysBetween(today, t.start), c = cinfo(t);
+  let head = '';
+  if (dd > 0) head = `<div class="card"><div class="muted small">Countdown</div><div class="big">${dd} ${dd===1?'Tag':'Tage'}</div><div class="small muted">bis zur Abreise am ${fmtLong(t.start)}</div>${nextPrep(t)}</div>`;
+  else if (t.end < today) head = `<div class="card"><b>Reise beendet</b><div class="small muted">Schau in die Ausgaben für die Abrechnung.</div></div>`;
+  const day = t.plan?.days.find(d => d.date === (dd > 0 ? t.start : today));
+  let dayCard = '';
+  if (day){
+    const now = new Date(), nowM = now.getHours()*60 + now.getMinutes();
+    const nxt = day.date === today ? day.items.find(i => !i.done && (toMin(i.time) ?? 0) >= nowM - 30) : null;
+    dayCard = `<h2>${day.date === today ? 'Heute' : 'Erster Tag'} · ${esc(day.title)}</h2>
+      ${nxt ? `<div class="card" style="border-color:var(--accent)"><div class="small muted">Als Nächstes</div><div class="row"><div class="big" style="font-size:1.4rem">${esc(nxt.time)}</div><div class="grow"><b>${esc(nxt.title)}</b><div class="small muted">${esc(nxt.desc||'')}</div></div></div>${nxt.map?`<a class="btn sec block" style="margin-top:10px" href="${esc(nxt.map)}" target="_blank" rel="noopener">📍 Route / Karte</a>`:''}</div>` : ''}
+      <div class="card">${day.items.map(itemHtml).join('') || '<span class="muted">Keine Einträge.</span>'}</div>`;
+  }
+  const wx = weatherCard(t);
+  const lt = t.dest?.tz ? new Date().toLocaleTimeString('de-DE', {timeZone:t.dest.tz, hour:'2-digit', minute:'2-digit'}) : null;
+  const quick = `<div class="tiles" style="margin-top:12px">
+      ${lt ? `<div class="tile"><div class="small muted">Ortszeit</div><div class="big" style="font-size:1.4rem">${lt}</div></div>` : ''}
+      ${c ? `<a class="tile" style="text-decoration:none;color:inherit" href="tel:${c.em.match(/\d+/)[0]}"><div class="small muted">Notruf</div><div class="big" style="font-size:1.4rem">📞 ${c.em.match(/\d+/)[0]}</div></a>` : ''}
+      ${t.stay?.addr||t.stay?.name ? `<a class="tile" style="text-decoration:none;color:inherit" target="_blank" rel="noopener" href="${esc(mapsDir(t.stay.addr||t.stay.name))}"><div class="small muted">Unterkunft</div><b>🏨 Route dahin</b></a>` : ''}
+      <button class="tile" style="border:0;text-align:left;cursor:pointer" data-tab="ki"><div class="small muted">Frage?</div><b>✨ KI-Assistent</b></button>
+    </div>`;
+  return head + quick + wx + dayCard + `<h2>Tipps für diese Reise</h2>${tipsHtml(t)}`;
+}
+function nextPrep(t){
+  const open = t.checks?.prep.filter(x => !x.done).sort((a,b)=>(a.due||'').localeCompare(b.due||'')) || [];
+  if (!open.length) return '<div class="small" style="margin-top:8px;color:var(--ok)">✓ Vorbereitung komplett</div>';
+  const x = open[0];
+  return `<div class="note" style="margin-bottom:0">Nächstes To-do: <b>${esc(x.t)}</b>${x.due?` (bis ${fmtDay(x.due)})`:''} · noch ${open.length} offen</div>`;
+}
+function tipsHtml(t){
+  return (t.tips||[]).map(x => `<div class="card" style="padding:12px 14px"><div class="row" style="align-items:flex-start"><div style="font-size:1.3rem">${esc(x.icon)}</div><div class="grow"><b>${esc(x.title)}</b><div class="small" style="margin-top:2px">${esc(x.text)}</div></div></div></div>`).join('');
+}
+function weatherCard(t){
+  const w = t.weather;
+  if (!t.dest?.lat) return '';
+  if (!w) return `<div class="card small muted">Wetter wird geladen …</div>`;
+  if (w.unavailable) return `<div class="card small"><b>🌦️ Wetter</b><div class="muted">Die Vorhersage gibt es ab ${fmtDay(w.from)} (16 Tage vorher). Die App lädt sie dann automatisch und ergänzt die Packliste.</div></div>`;
+  if (!w.days?.length) return '';
+  return `<h2>Wetter</h2><div class="wx">${w.days.map(d => `<div class="d"><div class="small">${fmtDay(d.date).split(',')[0]}</div><div class="e">${WMO(d.code)}</div><b>${d.tmax}°</b> <span class="muted">${d.tmin}°</span><div class="small muted">💧${d.rain}%</div><div class="small muted">🌅${d.sunset}</div></div>`).join('')}</div>
+    <div class="small muted">Stand ${new Date(w.fetched).toLocaleString('de-DE',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})} · Open-Meteo</div>`;
+}
+
+/* ---------- Plan ---------- */
+function itemHtml(i){
+  return `<div class="item ${i.done?'done':''} ${i.fixed?'fixed':''}" data-item="${i.id}">
+    <div class="tm">${esc(i.time||'–')}</div>
+    <div class="bd"><div class="ti">${esc(i.title)}${i.fixed?'<span class="tag fix">fix</span>':''}</div>
+      ${i.desc?`<div class="ds">${esc(i.desc)}</div>`:''}
+      <div class="acts"><button data-done="${i.id}">${i.done?'↺ offen':'✓ erledigt'}</button>${i.map?`<a href="${esc(i.map)}" target="_blank" rel="noopener">📍 Karte</a>`:''}<button data-edititem="${i.id}">✎ ändern</button></div>
+    </div></div>`;
+}
+function viewPlan(t){
+  const p = t.plan;
+  if (!p) return '<p>Kein Plan.</p>';
+  return `<div class="row" style="margin-top:14px"><div class="grow small muted">${p.source==='ai'?'<span class="tag ai">✨ KI-Plan</span>':'<span class="tag">Auto-Plan</span>'} Tippe auf ✓, wenn etwas erledigt ist.</div></div>
+    ${p.source!=='ai' ? `<div class="card small"><b>Tipp:</b> Der Auto-Plan ist ein Gerüst mit Vorschlägen. Für konkrete Orte, Restaurants und Insider-Tipps: <button class="btn sec" style="padding:6px 10px;margin-top:6px" data-tab="ki">✨ Plan mit KI verfeinern</button></div>` : ''}
+    ${p.days.map(d => `<div class="day"><h3>${fmtDay(d.date)}</h3><span class="muted small">${esc(d.title)}</span></div>
+      <div class="card">${d.items.map(itemHtml).join('') || '<span class="muted small">Frei.</span>'}
+      <button class="btn sec block" style="margin-top:10px;padding:8px" data-additem="${d.date}">＋ Eintrag</button></div>`).join('')}
+    <button class="btn warn block" style="margin:20px 0" data-act="regen">↻ Auto-Plan neu erstellen</button>`;
+}
+
+/* ---------- Listen ---------- */
+function checkList(t, key, title){
+  const arr = t.checks?.[key] || [];
+  const done = arr.filter(x=>x.done).length;
+  return `<h2>${title} <span class="muted small">${done}/${arr.length}</span></h2>
+    <div class="bar"><i style="width:${arr.length?done/arr.length*100:0}%"></i></div>
+    <div class="card">${arr.map(x => `<div class="chk ${x.done?'on':''}" data-check="${key}:${x.id}"><span class="box">${x.done?'✓':''}</span><span class="lbl">${esc(x.t)}${x.due&&!x.done?`<div class="due">bis ${fmtDay(x.due)}</div>`:''}${x.link?` <a href="${esc(x.link)}" target="_blank" rel="noopener" class="small">Link</a>`:''}</span><button class="x" data-delcheck="${key}:${x.id}">✕</button></div>`).join('')}
+    <div class="row" style="margin-top:8px"><input class="t grow" id="add-${key}" placeholder="Eigener Punkt …"><button class="btn sec" data-addcheck="${key}">＋</button></div></div>`;
+}
+function viewLists(t){
+  return checkList(t,'prep','Vorbereitung') + checkList(t,'pack','Packliste') + checkList(t,'custom','Eigene To-dos')
+    + `<button class="btn warn block" style="margin:20px 0" data-act="regenchecks">↻ Listen neu erstellen (z. B. nach Wetter-Update)</button>`;
+}
+
+/* ---------- Tools ---------- */
+function viewTools(t){
+  const c = cinfo(t), cur = c?.cur || 'EUR', people = t.people || 1;
+  const total = t.expenses.reduce((s,e) => s + (e.cur==='EUR' ? e.amt : e.amt / (rate(e.cur)||1)), 0);
+  const names = t.travellers || Array.from({length:people}, (_,i) => i===0 ? 'Ich' : 'Person '+(i+1));
+  // Ausgleich
+  let settle = '';
+  if (people > 1 && t.expenses.length){
+    const paid = Object.fromEntries(names.map(n=>[n,0]));
+    t.expenses.forEach(e => { paid[e.who||names[0]] = (paid[e.who||names[0]]||0) + (e.cur==='EUR'?e.amt:e.amt/(rate(e.cur)||1)); });
+    const share = total / names.length;
+    settle = '<div class="small" style="margin-top:8px">' + names.map(n => { const d = paid[n]-share; return `${esc(n)}: ${d>=0?'bekommt':'zahlt'} <b>${fmtMoney(Math.abs(d),'EUR')}</b>`; }).join('<br>') + '</div>';
+  }
+  const ph = PHRASES[c?.lang];
+  return `
+  <h2>💱 Währungsrechner</h2>
+  <div class="card">
+    <div class="grid2"><div><label class="f">${cur}</label><input class="t" type="number" inputmode="decimal" id="fx-a" value="10"></div>
+    <div><label class="f">EUR</label><input class="t" type="number" inputmode="decimal" id="fx-b"></div></div>
+    ${cur==='EUR' ? '<div class="small muted" style="margin-top:6px">Ziel nutzt Euro. Wähle eine andere Währung:</div>' : ''}
+    <select class="t" id="fx-cur" style="margin-top:8px">${Object.keys(FX_FALLBACK).map(k=>`<option ${k===(t.fxCur||cur)?'selected':''}>${k}</option>`).join('')}</select>
+    <div class="small muted" id="fx-info" style="margin-top:6px"></div>
+  </div>
+
+  <h2>💶 Ausgaben ${people>1?'& Aufteilung':''}</h2>
+  <div class="card">
+    <div class="row"><div class="grow"><div class="small muted">Gesamt</div><div class="big" style="font-size:1.5rem">${fmtMoney(total,'EUR')}</div></div>${people>1?`<div><div class="small muted">pro Person</div><b>${fmtMoney(total/people,'EUR')}</b></div>`:''}</div>
+    ${settle}
+    <div style="margin-top:10px">${t.expenses.slice().reverse().map(e => `<div class="list-x"><div class="grow"><b>${esc(e.desc||'Ausgabe')}</b><div class="small muted">${fmtDay(e.date)}${people>1?' · '+esc(e.who||names[0]):''}</div></div><div>${fmtMoney(e.amt,e.cur)}</div><button class="x" data-delexp="${e.id}">✕</button></div>`).join('')}</div>
+    <div class="grid2" style="margin-top:8px"><input class="t" type="number" inputmode="decimal" id="ex-amt" placeholder="Betrag"><select class="t" id="ex-cur">${[...new Set([cur,'EUR'])].map(k=>`<option>${k}</option>`).join('')}</select></div>
+    <input class="t" id="ex-desc" placeholder="Wofür? (z. B. Abendessen)" style="margin-top:8px">
+    ${people>1?`<select class="t" id="ex-who" style="margin-top:8px">${names.map(n=>`<option>${esc(n)}</option>`).join('')}</select>`:''}
+    <button class="btn block" style="margin-top:8px" data-act="addexp">＋ Ausgabe erfassen</button>
+  </div>
+
+  <h2>💁 Trinkgeld</h2>
+  <div class="card"><div class="small muted">${esc(c?.tip || 'Je nach Land unterschiedlich.')}</div>
+    <div class="grid2" style="margin-top:8px"><input class="t" type="number" inputmode="decimal" id="tip-a" placeholder="Rechnung"><select class="t" id="tip-p"><option value="5">5 %</option><option value="10" selected>10 %</option><option value="12.5">12,5 %</option><option value="15">15 %</option><option value="20">20 %</option></select></div>
+    <div id="tip-r" class="small" style="margin-top:6px"></div></div>
+
+  <h2>🧾 Dokumente & Codes</h2>
+  <div class="card">${t.docs.map(d => `<div class="list-x"><div class="grow"><div class="small muted">${esc(d.label)}</div><b style="word-break:break-all">${esc(d.value)}</b></div><button class="x" data-copy="${esc(d.value)}">⧉</button><button class="x" data-deldoc="${d.id}">✕</button></div>`).join('') || '<div class="small muted">Buchungscodes, Ticketnummern, Versicherung, Hotel-Telefon …</div>'}
+    <div class="grid2" style="margin-top:8px"><input class="t" id="doc-l" placeholder="Bezeichnung"><input class="t" id="doc-v" placeholder="Code / Nummer"></div>
+    <button class="btn sec block" style="margin-top:8px" data-act="adddoc">＋ Speichern</button></div>
+
+  ${c ? `<h2>🌍 ${esc(c.n)} auf einen Blick</h2><div class="card"><div class="kv">
+    <b>Notruf</b><span>${esc(c.em)}</span><b>Währung</b><span>${esc(c.cur)}</span><b>Stecker</b><span>${esc(c.plug)}${PLUG_OK(c.plug)?' ✓ passt':' ⚠️ Adapter'}</span><b>Verkehr</b><span>${esc(c.drive)}</span>
+    ${t.dest.tz?`<b>Zeitzone</b><span>${esc(t.dest.tz)}</span>`:''}</div>
+    <a class="small" target="_blank" rel="noopener" href="https://www.auswaertiges-amt.de/de/ReiseUndSicherheit/reise-und-sicherheitshinweise">Reise- & Sicherheitshinweise (Auswärtiges Amt)</a></div>` : ''}
+
+  ${ph ? `<h2>🗣️ Wichtige Sätze</h2><div class="card ph">${PHRASE_DE.map((d,i)=>`<div>${d}</div><div><b>${esc(ph[i])}</b></div>`).join('')}</div>` : ''}
+
+  <h2>🔗 Schnellzugriff</h2>
+  <div class="card chips">
+    ${t.dest?.name?`<a class="chip" target="_blank" rel="noopener" href="${mapsQ(t.dest.name)}">🗺️ Karte</a>`:''}
+    ${t.stay?.addr||t.stay?.name?`<a class="chip" target="_blank" rel="noopener" href="${mapsDir(t.stay.addr||t.stay.name)}">🏨 Zur Unterkunft</a>`:''}
+    ${t.mode==='flug'&&t.outbound?`<a class="chip" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(t.outbound.split(' ')[0]+' flight status')}">✈️ Flugstatus Hin</a>`:''}
+    ${t.mode==='flug'&&t.inbound?`<a class="chip" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(t.inbound.split(' ')[0]+' flight status')}">✈️ Flugstatus Rück</a>`:''}
+    ${t.dest?.name?`<a class="chip" target="_blank" rel="noopener" href="${mapsQ('restaurants near me')}">🍽️ Essen in der Nähe</a><a class="chip" target="_blank" rel="noopener" href="${mapsQ('pharmacy near me')}">💊 Apotheke</a><a class="chip" target="_blank" rel="noopener" href="${mapsQ('atm near me')}">🏧 Geldautomat</a>`:''}
+  </div>`;
+}
+
+/* ---------- KI ---------- */
+function viewAI(t){
+  const has = !!settings.apiKey;
+  return `
+  <div class="card" style="margin-top:14px"><b>✨ KI-Reiseassistent</b>
+    <div class="small muted" style="margin-top:4px">Nutzt Claude mit deinem eigenen API-Schlüssel. Er kennt alle Eckdaten dieser Reise.</div>
+    ${has ? '' : `<div class="note">Noch kein API-Schlüssel hinterlegt. Ohne Schlüssel funktionieren Auto-Plan, Listen und Tools trotzdem vollständig.</div>`}
+    <button class="btn sec block" style="margin-top:8px" data-act="settings">⚙︎ ${has?'KI-Einstellungen':'API-Schlüssel eintragen'}</button>
+  </div>
+  <div class="card"><b>Plan mit KI erstellen</b>
+    <div class="small muted" style="margin-top:4px">Ersetzt den Auto-Plan durch einen detaillierten Plan mit echten Orten, Wegezeiten und Insider-Tipps. Fixtermine bleiben fix.</div>
+    <button class="btn block" style="margin-top:10px" data-act="aiplan" ${has?'':'disabled'}>✨ Detaillierten Plan erstellen</button>
+    <div id="ai-status" class="small muted" style="margin-top:6px"></div>
+  </div>
+  <h2>Frag deinen Assistenten</h2>
+  <div id="chat">${(t.chat||[]).map(m => `<div class="msg ${m.role==='user'?'u':'a'}">${esc(m.content)}</div>`).join('') || `<div class="chips">${['Wo esse ich heute Abend gut in der Nähe meiner Unterkunft?','Was mache ich bei Regen?','Wie komme ich vom Flughafen am besten zur Unterkunft?','Was sollte ich auf keinen Fall verpassen?'].map(q=>`<span class="chip" data-ask="${esc(q)}">${esc(q)}</span>`).join('')}</div>`}</div>
+  <div class="row" style="margin:12px 0 20px"><input class="t grow" id="ask" placeholder="Deine Frage …" ${has?'':'disabled'}><button class="btn" data-act="ask" ${has?'':'disabled'}>➤</button></div>
+  ${(t.chat||[]).length?'<button class="btn sec block" data-act="clearchat">Chat leeren</button>':''}`;
+}
+
+/* ---------- Sheets ---------- */
+function sheet(title, inner, onMount){
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="hd"><h2>${title}</h2><button class="x" data-close>✕</button></div>${inner}</div>`;
+  bg.addEventListener('click', e => { if (e.target === bg || e.target.closest('[data-close]')) bg.remove(); });
+  document.body.appendChild(bg); onMount && onMount(bg); return bg;
+}
+function openSettings(){
+  sheet('Einstellungen', `
+    <label class="f">Claude API-Schlüssel (bleibt nur auf diesem Gerät)</label>
+    <input class="t" id="s-key" type="password" placeholder="sk-ant-…" value="${esc(settings.apiKey)}" autocomplete="off">
+    <div class="small muted" style="margin-top:4px">Schlüssel bekommst du unter console.anthropic.com → API Keys. Tipp: dort ein Ausgabenlimit setzen.</div>
+    <label class="f">Modell</label>
+    <select class="t" id="s-model">${[['claude-opus-5-5','Claude Opus 5.5 (beste Qualität)'],['claude-sonnet-5-5','Claude Sonnet 5.5 (schneller, günstiger)'],['claude-haiku-5-5','Claude Haiku 5.5 (am günstigsten)']].map(([k,l])=>`<option value="${k}" ${settings.model===k?'selected':''}>${l}</option>`).join('')}</select>
+    <label class="f">Gründlichkeit</label>
+    <select class="t" id="s-eff">${[['low','schnell'],['medium','ausgewogen'],['high','gründlich']].map(([k,l])=>`<option value="${k}" ${settings.effort===k?'selected':''}>${l}</option>`).join('')}</select>
+    <button class="btn block" style="margin-top:14px" id="s-save">Speichern</button>
+    <h2>Daten</h2>
+    <div class="row"><button class="btn sec grow" id="s-exp">⬇︎ Backup exportieren</button><label class="btn sec grow" style="margin:0">⬆︎ Import<input type="file" accept="application/json" id="s-imp" class="hide"></label></div>
+    <p class="small muted">Version ${APP_VERSION} · Wetter: Open-Meteo · Kurse: Frankfurter (EZB)</p>`,
+  bg => {
+    $('#s-save', bg).onclick = () => { settings.apiKey = $('#s-key',bg).value.trim(); settings.model = $('#s-model',bg).value; settings.effort = $('#s-eff',bg).value; saveSettings(); bg.remove(); render(); toast('Gespeichert'); };
+    $('#s-exp', bg).onclick = () => { const b = new Blob([JSON.stringify({v:1, trips}, null, 1)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'trip-assistant-backup.json'; a.click(); };
+    $('#s-imp', bg).onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); (j.trips||[]).forEach(x => { if (!getTrip(x.id)) trips.push(x); }); save(); bg.remove(); render(); toast('Import fertig'); } catch { toast('Datei konnte nicht gelesen werden'); } };
+  });
+}
+function openItemEditor(t, dayDate, itemId){
+  const day = t.plan.days.find(d => d.date === dayDate) || t.plan.days.find(d => d.items.some(i => i.id === itemId));
+  const it = itemId ? day.items.find(i => i.id === itemId) : {time:'', title:'', desc:''};
+  sheet(itemId ? 'Eintrag ändern' : 'Neuer Eintrag', `
+    <label class="f">Uhrzeit</label><input class="t" type="time" id="e-time" value="${esc(it.time)}">
+    <label class="f">Titel</label><input class="t" id="e-title" value="${esc(it.title)}">
+    <label class="f">Notiz</label><textarea class="t" id="e-desc">${esc(it.desc||'')}</textarea>
+    <label class="f">Ort für Karte (optional)</label><input class="t" id="e-place" placeholder="z. B. Sagrada Família">
+    <div class="row" style="margin-top:14px">${itemId?'<button class="btn warn grow" id="e-del">Löschen</button>':''}<button class="btn grow" id="e-save">Speichern</button></div>`,
+  bg => {
+    $('#e-save',bg).onclick = () => {
+      const title = $('#e-title',bg).value.trim(); if (!title) return toast('Titel fehlt');
+      const place = $('#e-place',bg).value.trim();
+      Object.assign(it, {time:$('#e-time',bg).value, title, desc:$('#e-desc',bg).value.trim()});
+      if (place) it.map = mapsQ(place + (t.dest?.name ? ', '+t.dest.name : ''));
+      if (!itemId){ it.id = uid(); it.done = false; day.items.push(it); }
+      day.items.sort((a,b)=>(toMin(a.time)??9999)-(toMin(b.time)??9999));
+      save(); bg.remove(); render();
+    };
+    if (itemId) $('#e-del',bg).onclick = () => { day.items = day.items.filter(i => i.id !== itemId); save(); bg.remove(); render(); };
+  });
+}
+
+/* ---------- Nach dem Rendern ---------- */
+function afterTrip(t){
+  if (state.tab === 'tools'){
+    const a = $('#fx-a'), b = $('#fx-b'), sel = $('#fx-cur'), info = $('#fx-info');
+    const calc = (from) => {
+      const c = sel.value, r = rate(c); if (!r) return;
+      if (from === 'a') b.value = a.value ? (a.value / r).toFixed(2) : ''; else a.value = b.value ? (b.value * r).toFixed(2) : '';
+      a.previousElementSibling.textContent = c;
+      info.textContent = `1 EUR = ${r} ${c} · ${fx?.live ? 'EZB-Kurs vom '+fx.date : 'Näherungswert (offline)'}`;
+    };
+    a.oninput = () => calc('a'); b.oninput = () => calc('b'); sel.onchange = () => { t.fxCur = sel.value; save(); calc('a'); };
+    loadFx().then(() => calc('a'));
+    const ta = $('#tip-a'), tp = $('#tip-p'), tr = $('#tip-r');
+    const tc = () => { const v = +ta.value; if (!v){ tr.textContent=''; return; } const tip = v*tp.value/100; tr.innerHTML = `Trinkgeld <b>${tip.toFixed(2)}</b> · Gesamt <b>${(v+tip).toFixed(2)}</b> · aufgerundet <b>${Math.ceil(v+tip)}</b>${t.people>1?` · pro Person <b>${((v+tip)/t.people).toFixed(2)}</b>`:''}`; };
+    ta.oninput = tc; tp.onchange = tc;
+  }
+  if (state.tab === 'heute' && t.dest?.lat && (!t.weather || (t.weather.fetched && Date.now() - t.weather.fetched > 3*3600e3) || (t.weather.unavailable && todayIso() >= t.weather.from))) refreshWeather(t);
+}
+async function refreshWeather(t, silent){
+  try {
+    const w = await fetchWeather(t); if (!w) return;
+    const had = t.weather?.days?.length;
+    t.weather = w; save();
+    if (!had && w.days?.length && t.checks){ // Packliste um Wetter ergänzen
+      const fresh = generateChecks(t, w.days).pack, have = new Set(t.checks.pack.map(x=>x.t));
+      fresh.forEach(x => { if (!have.has(x.t)) t.checks.pack.push(x); });
+      t.checks.pack = t.checks.pack.filter(x => x.t !== 'Wetter 3 Tage vorher checken und Liste ergänzen');
+      save();
+    }
+    if (state.view === 'trip' && state.tripId === t.id && (state.tab === 'heute')) render();
+  } catch(e){ if (!silent) toast('Wetter offline nicht verfügbar'); }
+}
+
+/* =========================================================
+   Events
+   ========================================================= */
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act],[data-tab],[data-open],[data-chip],[data-sug],[data-toggle],[data-delfix],[data-done],[data-edititem],[data-additem],[data-check],[data-delcheck],[data-addcheck],[data-delexp],[data-deldoc],[data-copy],[data-ask]');
+  if (!el) return;
+  const t = state.tripId ? getTrip(state.tripId) : null;
+  const d = el.dataset;
+
+  if (d.tab){ state.tab = d.tab; render(); window.scrollTo(0,0); return; }
+  if (d.open){ go('trip', {tripId:d.open, tab:'heute'}); return; }
+  if (d.chip){ readWizard(); const w = state.wiz; if (d.multi === '1'){ const s = new Set(w[d.chip]); s.has(d.v) ? s.delete(d.v) : s.add(d.v); w[d.chip] = [...s]; } else w[d.chip] = d.v; render(); return; }
+  if (d.sug){ readWizard(); const r = state._sug[+d.sug]; state.wiz.dest = r; state.wiz.destQ = r.name; render(); return; }
+  if (d.toggle){ readWizard(); state.wiz[d.toggle] = !state.wiz[d.toggle]; render(); return; }
+  if (d.delfix){ readWizard(); state.wiz.fixed.splice(+d.delfix, 1); render(); return; }
+  if (d.done && t){ for (const day of t.plan.days){ const i = day.items.find(x => x.id === d.done); if (i){ i.done = !i.done; break; } } save(); render(); return; }
+  if (d.edititem && t){ const day = t.plan.days.find(x => x.items.some(i => i.id === d.edititem)); openItemEditor(t, day.date, d.edititem); return; }
+  if (d.additem && t){ openItemEditor(t, d.additem, null); return; }
+  if (d.check && t){ if (e.target.closest('a,.x')) return; const [k,id] = d.check.split(':'); const x = t.checks[k].find(x=>x.id===id); x.done = !x.done; save(); render(); return; }
+  if (d.delcheck && t){ const [k,id] = d.delcheck.split(':'); t.checks[k] = t.checks[k].filter(x=>x.id!==id); save(); render(); return; }
+  if (d.addcheck && t){ const v = $('#add-'+d.addcheck).value.trim(); if (!v) return; t.checks[d.addcheck].push({id:uid(), t:v, done:false}); save(); render(); return; }
+  if (d.delexp && t){ t.expenses = t.expenses.filter(x=>x.id!==d.delexp); save(); render(); return; }
+  if (d.deldoc && t){ t.docs = t.docs.filter(x=>x.id!==d.deldoc); save(); render(); return; }
+  if (d.copy){ try { await navigator.clipboard.writeText(d.copy); toast('Kopiert'); } catch { toast(d.copy); } return; }
+  if (d.ask){ $('#ask').value = d.ask; if (settings.apiKey) ask(t); else toast('Erst API-Schlüssel eintragen'); return; }
+
+  switch (d.act){
+    case 'home': go('home'); break;
+    case 'new': state.editing = false; go('wizard', {wiz:blankTrip(), wizStep:0}); break;
+    case 'edit': state.editing = true; go('wizard', {wiz:JSON.parse(JSON.stringify(t)), wizStep:0}); break;
+    case 'cancel-edit': state.editing = false; go('trip'); break;
+    case 'settings': openSettings(); break;
+    case 'wback': readWizard(); state.wizStep--; render(); break;
+    case 'wnext':
+      readWizard();
+      if (state.wizStep === 0 && !state.wiz.dest && !state.wiz.destQ) return toast('Bitte ein Reiseziel eingeben.');
+      if (state.wizStep < WSTEPS.length-1){ state.wizStep++; render(); window.scrollTo(0,0); } else finishWizard();
+      break;
+    case 'addfix': {
+      readWizard(); const title = $('#f-title').value.trim(); if (!title) return toast('Was ist der Termin?');
+      state.wiz.fixed.push({title, date:$('#f-date').value, time:$('#f-time').value, place:$('#f-place').value.trim(), dur:$('#f-dur').value});
+      state.wiz.fixed.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)); render(); break; }
+    case 'regen':
+      if (!confirmInline(el, 'Sicher? Tippe nochmal')) return;
+      t.plan = generatePlan(t); t.tips = generateTips(t); save(); render(); toast('Auto-Plan neu erstellt'); break;
+    case 'regenchecks':
+      if (!confirmInline(el, 'Sicher? Tippe nochmal')) return;
+      { const c = generateChecks(t, t.weather?.days); c.custom = t.checks.custom; t.checks = c; save(); render(); } break;
+    case 'addexp': {
+      const amt = parseFloat(($('#ex-amt').value||'').replace(',', '.')); if (!amt) return toast('Betrag fehlt');
+      t.expenses.push({id:uid(), amt, cur:$('#ex-cur').value, desc:$('#ex-desc').value.trim(), who:$('#ex-who')?.value, date:todayIso()});
+      save(); render(); break; }
+    case 'adddoc': {
+      const l = $('#doc-l').value.trim(), v = $('#doc-v').value.trim(); if (!v) return toast('Code fehlt');
+      t.docs.push({id:uid(), label:l||'Notiz', value:v}); save(); render(); break; }
+    case 'aiplan': {
+      const st = $('#ai-status'); el.disabled = true; st.innerHTML = '<span class="spin"></span> KI plant deine Reise … (kann 1–2 Minuten dauern)';
+      try { const r = await aiPlan(t); t.plan = r.plan; t.tips = r.tips; save(); state.tab = 'plan'; render(); toast('KI-Plan ist fertig ✨'); }
+      catch(err){ st.textContent = '⚠️ ' + err.message; el.disabled = false; }
+      break; }
+    case 'ask': ask(t); break;
+    case 'clearchat': t.chat = []; save(); render(); break;
+  }
+});
+function confirmInline(el, txt){ if (el.dataset.armed){ return true; } el.dataset.armed = 1; const o = el.textContent; el.textContent = txt; setTimeout(()=>{ el.textContent = o; delete el.dataset.armed; }, 3000); return false; }
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'ask'){ e.preventDefault(); ask(getTrip(state.tripId)); } });
+
+async function ask(t){
+  const inp = $('#ask'), q = inp.value.trim(); if (!q) return;
+  t.chat = t.chat || []; t.chat.push({role:'user', content:q}); save(); render();
+  const box = $('#chat'); box.insertAdjacentHTML('beforeend', '<div class="msg a" id="pending"><span class="spin"></span></div>');
+  $('#pending').scrollIntoView({block:'end'});
+  const now = new Date();
+  const system = `Du bist ein persönlicher Reiseassistent auf dem Handy des Reisenden. Antworte auf Deutsch, kurz und konkret (max. 150 Wörter), mit echten Orten. Wenn du etwas nicht sicher weißt (Öffnungszeiten, Preise, aktuelle Events), sag das.\n\nREISE:\n${tripBrief(t)}\n\nAktueller Plan (Kurzform): ${t.plan.days.map(d=>d.date+': '+d.items.map(i=>i.time+' '+i.title).join(', ')).join(' | ')}\n\nJetzt: ${now.toLocaleString('de-DE')} (Gerätezeit).`;
+  try {
+    const a = await callClaude({system, messages:t.chat.slice(-12).map(m=>({role:m.role, content:m.content})), maxTokens:4000});
+    t.chat.push({role:'assistant', content:a || '(keine Antwort)'});
+  } catch(err){ t.chat.push({role:'assistant', content:'⚠️ '+err.message}); }
+  save(); render(); const ms = document.querySelectorAll('.msg'); ms[ms.length-1]?.scrollIntoView({block:'end'});
+}
+
+/* ---------- Start ---------- */
+load(); render();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // Offline-Cache für Stundenplan. VERSION erhöhen, um Updates auszuliefern.
-const VERSION = 'sp-v1';
+const VERSION = 'sp-v2'; // v2.0.0: iOS-27-Design, Master-Woche, Zeitstrahl
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));

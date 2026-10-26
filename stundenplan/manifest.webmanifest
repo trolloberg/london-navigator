@@ -1,7 +1,7 @@
 {
   "name": "Stundenplan",
   "short_name": "Stundenplan",
-  "description": "Dein persönlicher Stundenplan: perfekte Woche, Routinen, Blocker und To-Dos.",
+  "description": "Dein Stundenplan: eine Master-Woche mit Routinen und Blockern, Zeitstrahl für heute und To-Dos.",
   "lang": "de",
   "start_url": "./",
   "scope": "./",

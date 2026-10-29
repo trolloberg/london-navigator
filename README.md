@@ -6,4 +6,4 @@ Installieren: Link in Safari öffnen → Teilen → „Zum Home-Bildschirm“ �
 
 ## Weitere Apps in diesem Branch
 - `travel/` – Trip Assistant (Reise-Assistent)
-- `stundenplan/` – Stundenplan: Master-Woche mit Routinen und Blockern, Zeitstrahl für heute, Wochenübersicht mit Symbolen und To-Dos. Daten nur lokal auf dem Gerät.
+- `stundenplan/` – Schedule (früher Stundenplan): Master-Woche mit Blockern, Zeitstrahl für heute, Wochenübersicht mit Bearbeiten-Modus (gedrückt halten) und To-Dos. Daten nur lokal auf dem Gerät. `stundenplan/push-server/worker.js` ist der optionale Push-Server für Cloudflare Workers (kennt nur Uhrzeiten).

@@ -1,7 +1,7 @@
 {
-  "name": "Stundenplan",
-  "short_name": "Stundenplan",
-  "description": "Dein Stundenplan: eine Master-Woche mit Routinen und Blockern, Zeitstrahl für heute und To-Dos.",
+  "name": "Schedule",
+  "short_name": "Schedule",
+  "description": "Your week in blocks: a master week, today's timeline, a week view you edit by press and hold, and to-dos. Data stays on the device.",
   "lang": "de",
   "start_url": "./",
   "scope": "./",

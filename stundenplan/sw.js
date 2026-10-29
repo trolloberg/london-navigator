@@ -1,5 +1,5 @@
 // Offline-Cache und Erinnerungen für Schedule. VERSION erhöhen, um Updates auszuliefern.
-const VERSION = 'sp-v3'; // v3.0.0: Schedule, Bearbeiten-Modus, Einstellungen, Mitteilungen
+const VERSION = 'sp-v3.0.1'; // v3.0.1: stabile Anzeige (keine leeren Ansichten), Fehlerprotokoll
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
